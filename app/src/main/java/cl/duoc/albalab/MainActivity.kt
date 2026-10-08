@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import cl.duoc.albalab.ui.PantallaRegistro
 import cl.duoc.albalab.ui.theme.AlbaLabTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,8 +22,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AlbaLabTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    PantallaRegistro(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -30,18 +31,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AlbaLabTheme {
-        Greeting("Android")
-    }
-}
