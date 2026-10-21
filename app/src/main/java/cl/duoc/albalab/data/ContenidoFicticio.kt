@@ -60,4 +60,10 @@ object ContenidoFicticio {
         ProductoCatalogo(2, "Set Papelería Alba Lab", "Agenda perpetua en papel reciclado y separadores.", 12900),
         ProductoCatalogo(3, "Caja Regalo Inclusión RSE", "Selección de productos artesanales con tarjeta de impacto.", 24900)
     )
+
+    val destinoAportes = listOf(
+        DestinoAporte("Materiales y equipamiento adaptado", "45%", "Insumos para talleres productivos y ayudas técnicas sensoriales."),
+        DestinoAporte("Becas y apoyo terapéutico", "35%", "Financiamiento directo para estudiantes y jóvenes con discapacidad múltiple."),
+        DestinoAporte("Inserción y seguimiento laboral", "20%", "Acompañamiento por preparadores laborales en espacios de trabajo.")
+    )
 }
