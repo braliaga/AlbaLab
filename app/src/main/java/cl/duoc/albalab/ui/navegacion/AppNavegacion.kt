@@ -80,10 +80,14 @@ fun AppNavegacion() {
             composable(Rutas.CATALOGO) {
                 PantallaCatalogo(onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) })
             }
-            composable(route = Rutas.REGISTRO) {
-                PantallaRegistro(modifier = Modifier)
+            composable(Rutas.REGISTRO) {
+                PantallaRegistro(
+                    vm = viewModel,
+                    onVerRegistros = { navController.navigate(Rutas.REGISTROS) {
+                        popUpTo(Rutas.INICIO) // Limpia el stack para no volver al registro completado
+                    } }
+                )
             }
-            // Rutas de P6 (las dejaremos vacías por ahora hasta que hagamos ese paso)
             composable(Rutas.REGISTROS) {
                 Text("Mis Registros (En construcción P6)", modifier = Modifier.padding(16.dp))
             }
