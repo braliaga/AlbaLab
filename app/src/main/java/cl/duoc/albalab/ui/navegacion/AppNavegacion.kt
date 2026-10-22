@@ -20,6 +20,8 @@ import cl.duoc.albalab.ui.PantallaProgramas
 import cl.duoc.albalab.ui.PantallaRegistro
 import cl.duoc.albalab.viewmodel.RegistroViewModel
 import androidx.compose.ui.unit.dp
+import cl.duoc.albalab.ui.PantallaEditarRegistro
+import cl.duoc.albalab.ui.PantallaMisRegistros
 
 object Rutas {
     const val INICIO = "inicio"
@@ -88,11 +90,24 @@ fun AppNavegacion() {
                     } }
                 )
             }
-            composable(Rutas.REGISTROS) {
-                Text("Mis Registros (En construcción P6)", modifier = Modifier.padding(16.dp))
+            composable(route = Rutas.REGISTROS) {
+                PantallaMisRegistros(
+                    vm = viewModel,
+                    onEditar = { id -> navController.navigate("editar/$id") }
+                )
             }
-            composable(Rutas.EDITAR) {
-                Text("Editar Registro (En construcción P6)", modifier = Modifier.padding(16.dp))
+            composable(
+                route = Rutas.EDITAR,
+                arguments = listOf(androidx.navigation.navArgument("id") {
+                    type = androidx.navigation.NavType.IntType
+                })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("id") ?: 0
+                PantallaEditarRegistro(
+                    id = id,
+                    vm = viewModel,
+                    onVolver = { navController.navigateUp() }
+                )
             }
         }
     }
