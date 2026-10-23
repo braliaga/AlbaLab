@@ -3,9 +3,11 @@ package cl.duoc.albalab.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.ui.draw.clip
+import cl.duoc.albalab.ui.componentes.ImagenRemota
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,7 +36,11 @@ fun PantallaCatalogo(
             items(ContenidoFicticio.catalogoProductos) { prod ->
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "Producto", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(40.dp))
+                        ImagenRemota(
+                            url = prod.imagenUrl,
+                            descripcion = "Imagen de ${prod.nombre}",
+                            modifier = Modifier.size(72.dp).clip(RoundedCornerShape(12.dp))
+                        )
                         Spacer(Modifier.width(16.dp))
                         Column {
                             Text(prod.nombre, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)

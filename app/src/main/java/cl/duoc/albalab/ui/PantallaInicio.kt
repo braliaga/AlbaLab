@@ -2,6 +2,9 @@ package cl.duoc.albalab.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import cl.duoc.albalab.ui.componentes.ImagenRemota
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,6 +34,11 @@ fun PantallaInicio(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            ImagenRemota(
+                url = ContenidoFicticio.bannerInicioUrl,
+                descripcion = "Imagen ilustrativa de Alba Lab",
+                modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(16.dp))
+            )
             Text("CORPALIV • Alba Lab", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             Text(ContenidoFicticio.propositoInstitucional, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
 

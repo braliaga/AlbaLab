@@ -23,7 +23,8 @@ data class ProductoCatalogo(
     val id: Int,
     val nombre: String,
     val descripcion: String,
-    val precioClp: Int
+    val precioClp: Int,
+    val imagenUrl: String
 )
 
 data class DestinoAporte(
