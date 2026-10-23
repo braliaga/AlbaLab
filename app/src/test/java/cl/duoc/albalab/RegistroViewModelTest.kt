@@ -116,4 +116,17 @@ class RegistroViewModelTest {
         assertEquals("987654321", dao.lista.value.first().telefono)
         assertTrue(vm.edicion.value.guardadoOk)
     }
+
+    @Test
+    fun reabrirEdicionLimpiaGuardadoOk() {
+        llenarFormularioValido()
+        vm.guardar()
+        vm.cargarEdicion(1)
+        vm.guardarEdicion()
+        assertTrue(vm.edicion.value.guardadoOk)
+
+        vm.cargarEdicion(1)
+
+        assertFalse(vm.edicion.value.guardadoOk)
+    }
 }

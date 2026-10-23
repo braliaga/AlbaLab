@@ -140,6 +140,8 @@ class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
     }
 
     fun cargarEdicion(id: Int) {
+        // Limpia el estado anterior antes de cargar: si no, guardadoOk = true de una edición previa cierra la pantalla.
+        _edicion.value = EdicionState(id = id)
         viewModelScope.launch {
             val r = repo.obtenerPorId(id) ?: return@launch
             _edicion.value = EdicionState(
