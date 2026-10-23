@@ -9,7 +9,7 @@ import java.util.Locale
 
 // Cada función devuelve el mensaje de error, o null si el valor es válido.
 object Validaciones {
-    private val regexCorreo = Regex("""^[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+""")
+    private val regexCorreo = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+""")
     private val regexFecha = Regex("""(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|[1][0-2])/[0-9]+""")
 
     fun nombre(valor: String): String? = when {

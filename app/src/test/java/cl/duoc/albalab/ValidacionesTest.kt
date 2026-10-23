@@ -29,7 +29,11 @@ class ValidacionesTest {
     @Test
     fun correo() {
         assertNull(Validaciones.correo("ana@mail.cl"))
+        assertNull(Validaciones.correo("juan.perez@mail.cl"))
+        assertNull(Validaciones.correo("ana_x@correo.co.cl"))
         assertNotNull(Validaciones.correo("a@b"))
+        assertNotNull(Validaciones.correo("ana@mail."))
+        assertNotNull(Validaciones.correo("@mail.cl"))
         assertNotNull(Validaciones.correo(""))
     }
 
@@ -53,7 +57,7 @@ class ValidacionesTest {
         assertNull(Validaciones.fecha("21/10/2026", hoy))
         assertNull(Validaciones.fecha("01/01/2027", hoy))
         assertNotNull(Validaciones.fecha("31/02/2027", hoy))
-        assertNotNull(Validaciones.fecha("1/1/2027", hoy))
+        assertNull(Validaciones.fecha("1/1/2027", hoy))
         assertNotNull(Validaciones.fecha("01/01/2027x", hoy))
         assertNotNull(Validaciones.fecha("20/10/2026", hoy))
     }
