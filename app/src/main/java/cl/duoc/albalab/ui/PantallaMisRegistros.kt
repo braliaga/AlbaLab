@@ -28,27 +28,34 @@ fun PantallaMisRegistros(
             Text("No hay colaboradores registrados aún.")
         }
     } else {
-        LazyColumn(
-            modifier = modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(registros) { registro ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+        Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+            Text(
+                text = "Total de colaboradores: ${registros.size}",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(registros) { registro ->
+                    Card(
+                        onClick = { onEditar(registro.id) },
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Column {
-                            // Mostrar los datos básicos
-                            Text(text = registro.nombre, style = MaterialTheme.typography.titleMedium)
-                            Text(text = "Tel: ${registro.telefono}", style = MaterialTheme.typography.bodyMedium)
-                        }
-                        IconButton(onClick = { onEditar(registro.id) }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Editar")
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                // Mostrar los datos básicos y el ID
+                                Text(text = "ID: ${registro.id}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                Text(text = registro.nombre, style = MaterialTheme.typography.titleMedium)
+                                Text(text = "Tel: ${registro.telefono}", style = MaterialTheme.typography.bodyMedium)
+                            }
+                            Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.secondary)
                         }
                     }
                 }

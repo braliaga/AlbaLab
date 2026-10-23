@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -124,6 +125,20 @@ fun PantallaRegistro(
                 )
             }
             MensajeError(s.errores[Campo.TIPO_AYUDA])
+
+            Text("Foto de perfil (opcional)", style = MaterialTheme.typography.titleMedium)
+            SelectorFoto(onFotoSeleccionada = { uri -> vm.onFoto(uri.toString()) })
+            if (s.fotoPath != null) {
+                coil.compose.AsyncImage(
+                    model = s.fotoPath,
+                    contentDescription = "Foto seleccionada",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .clip(androidx.compose.foundation.shape.CircleShape),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+            }
 
             Row(
                 modifier = Modifier
