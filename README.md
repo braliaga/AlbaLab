@@ -19,9 +19,10 @@ Proyecto de la asignatura DSY1105 · Desarrollo de Aplicaciones Móviles (Duoc U
   - `Checkbox` de aceptación de contacto y `Switch` para recibir novedades.
 - **Validaciones por campo** con ícono y mensaje de error animado. Las reglas viven en `Validaciones`, separadas de la interfaz.
 - **Estado con `StateFlow`:** el botón "Enviar registro" muestra un indicador de carga y, al guardar, un mensaje de éxito animado.
-- **Persistencia local con Room:** los registros se guardan y se listan en la pantalla de registros.
-
-<!-- Paulo: agregar aquí la edición de registros cuando esté terminada y verificada. -->
+- **Persistencia local con Room:** los registros se guardan y se listan en la pantalla de registros, con la miniatura de la foto si la tienen.
+- **Edición de registros:** al tocar un registro de la lista se abre un segundo formulario para cambiar teléfono, contacto preferido y recepción de novedades. Se valida igual que el registro y, al guardar, se actualiza en Room y se vuelve a la lista.
+- **Foto de perfil opcional** en el registro, tomada con la cámara o elegida desde la galería.
+- **Imágenes remotas** (banner de Inicio e imágenes del Catálogo) descargadas con Coil. Si no hay conexión se muestra un ícono en su lugar y el resto de la app sigue funcionando.
 
 ## Arquitectura
 
@@ -33,13 +34,15 @@ cl/duoc/albalab/
 ├── model/                   TipoAyuda, ContactoPreferido, RegistroInteres, Contenido
 ├── data/                    RegistroDao, AppDatabase, RegistroRepository, ContenidoFicticio
 ├── viewmodel/               Validaciones, RegistroViewModel
+├── utils/                   ImagenStorage (archivos de fotos con FileProvider)
 └── ui/
     ├── theme/               colores, tipografía y tema
     ├── navegacion/          AppNavegacion (rutas y transiciones)
-    ├── componentes/         CampoValidado
+    ├── componentes/         CampoValidado, ImagenRemota
     ├── PantallaInicio, PantallaProgramas, PantallaCatalogo
-    ├── PantallaRegistro
-    └── PantallaMisRegistros
+    ├── PantallaRegistro, SelectorFoto
+    ├── PantallaMisRegistros
+    └── PantallaEditarRegistro
 ```
 
 - **Model:** entidad `RegistroInteres` y enums `TipoAyuda` y `ContactoPreferido`.
@@ -49,7 +52,15 @@ cl/duoc/albalab/
 
 ## Recursos nativos y permisos
 
-<!-- Paulo: completar cuando la cámara y la galería estén integradas (recursos usados, permisos y comportamiento si se deniegan). -->
+| Recurso | Uso | Permiso |
+|---|---|---|
+| Cámara | Tomar la foto de perfil del registro (`TakePicture`) | `CAMERA`, solicitado en tiempo de ejecución al tocar el botón |
+| Galería | Elegir una foto existente (`GetContent`) | Ninguno: el selector del sistema entrega solo la imagen elegida |
+| Internet | Descargar las imágenes remotas con Coil | `INTERNET` (permiso normal, sin diálogo) |
+
+- Las fotos se copian a la carpeta privada de la app (`files/imagenes/`) y se comparten mediante `FileProvider`, por lo que siguen disponibles aunque se reinicie la app.
+- **Si se deniega el permiso de cámara**, el formulario muestra un mensaje bajo los botones y la galería sigue disponible; el resto del registro no se ve afectado. La foto es opcional.
+- Sin conexión a internet, las imágenes remotas muestran un ícono de respaldo.
 
 ## Cómo ejecutar
 
@@ -72,4 +83,4 @@ En Windows, si la terminal indica que `JAVA_HOME` no está definido, apuntarlo a
 
 ## Nota sobre los datos
 
-Todos los datos de la app y de los tests son **ficticios**. No se usan datos personales reales. La API REST mencionada es solo conceptual: la app funciona sin conexión y guarda todo en Room.
+Todos los datos de la app y de los tests son **ficticios**. No se usan datos personales reales. Las imágenes remotas provienen de un servicio público de fotos de ejemplo (objetos y paisajes sin relación con la organización ni con personas reales). La API REST mencionada es solo conceptual: los registros se guardan siempre en Room, sin servidor.
