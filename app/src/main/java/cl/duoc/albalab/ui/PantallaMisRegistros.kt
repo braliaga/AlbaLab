@@ -3,6 +3,10 @@ package cl.duoc.albalab.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -49,11 +53,22 @@ fun PantallaMisRegistros(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
-                                // Mostrar los datos básicos y el ID
-                                Text(text = "ID: ${registro.id}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                                Text(text = registro.nombre, style = MaterialTheme.typography.titleMedium)
-                                Text(text = "Tel: ${registro.telefono}", style = MaterialTheme.typography.bodyMedium)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (registro.fotoPath != null) {
+                                    AsyncImage(
+                                        model = registro.fotoPath,
+                                        contentDescription = "Foto de ${registro.nombre}",
+                                        modifier = Modifier.size(48.dp).clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                }
+                                Column {
+                                    // Mostrar los datos básicos y el ID
+                                    Text(text = "ID: ${registro.id}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    Text(text = registro.nombre, style = MaterialTheme.typography.titleMedium)
+                                    Text(text = "Tel: ${registro.telefono}", style = MaterialTheme.typography.bodyMedium)
+                                }
                             }
                             Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.secondary)
                         }

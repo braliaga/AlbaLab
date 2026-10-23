@@ -10,10 +10,14 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import cl.duoc.albalab.utils.ImagenStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SelectorFoto(
@@ -21,13 +25,17 @@ fun SelectorFoto(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val imagenStorage = remember { ImagenStorage(context) }
-    var uriTemporal by remember { mutableStateOf<Uri?>(null) }
+    // rememberSaveable: si se rota la pantalla con la cámara abierta, no se pierde el destino de la foto.
+    var uriTemporal by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var mensaje by remember { mutableStateOf<String?>(null) }
 
     val launcherCamara = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { exito ->
         if (exito && uriTemporal != null) {
+            mensaje = null
             onFotoSeleccionada(uriTemporal!!)
         }
     }
@@ -36,7 +44,15 @@ fun SelectorFoto(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            onFotoSeleccionada(uri)
+            scope.launch {
+                val copia = withContext(Dispatchers.IO) { imagenStorage.copiarDesdeGaleria(uri) }
+                if (copia != null) {
+                    mensaje = null
+                    onFotoSeleccionada(copia)
+                } else {
+                    mensaje = "No se pudo leer la imagen elegida."
+                }
+            }
         }
     }
 
@@ -44,31 +60,39 @@ fun SelectorFoto(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
+            mensaje = null
             uriTemporal = imagenStorage.crearArchivoImagen()
             launcherCamara.launch(uriTemporal!!)
+        } else {
+            mensaje = "Sin permiso de cámara no se puede tomar la foto. Puedes elegir una desde la galería."
         }
     }
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        OutlinedButton(
-            onClick = { launcherPermisoCamara.launch(Manifest.permission.CAMERA) },
-            modifier = Modifier.weight(1f)
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(Icons.Default.CameraAlt, contentDescription = "Cámara")
-            Spacer(Modifier.width(8.dp))
-            Text("Cámara")
-        }
+            OutlinedButton(
+                onClick = { launcherPermisoCamara.launch(Manifest.permission.CAMERA) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Cámara")
+                Spacer(Modifier.width(8.dp))
+                Text("Cámara")
+            }
 
-        OutlinedButton(
-            onClick = { launcherGaleria.launch("image/*") },
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(Icons.Default.PhotoLibrary, contentDescription = "Galería")
-            Spacer(Modifier.width(8.dp))
-            Text("Galería")
+            OutlinedButton(
+                onClick = { launcherGaleria.launch("image/*") },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.PhotoLibrary, contentDescription = "Galería")
+                Spacer(Modifier.width(8.dp))
+                Text("Galería")
+            }
+        }
+        mensaje?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
