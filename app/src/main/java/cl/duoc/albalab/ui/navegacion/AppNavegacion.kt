@@ -39,7 +39,7 @@ fun AppNavegacion() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
 
-    // Instancia única del ViewModel que pide el PLAN_AGENTE
+    // Una sola instancia del ViewModel, compartida por registro, lista y edición
     val viewModel: RegistroViewModel = viewModel(factory = RegistroViewModel.Factory)
 
     Scaffold(
