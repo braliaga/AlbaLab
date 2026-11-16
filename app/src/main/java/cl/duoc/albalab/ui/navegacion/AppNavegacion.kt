@@ -14,14 +14,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import cl.duoc.albalab.ui.PantallaCatalogo
-import cl.duoc.albalab.ui.PantallaInicio
-import cl.duoc.albalab.ui.PantallaProgramas
-import cl.duoc.albalab.ui.PantallaRegistro
+import cl.duoc.albalab.ui.screens.PantallaCatalogo
+import cl.duoc.albalab.ui.screens.PantallaInicio
+import cl.duoc.albalab.ui.screens.PantallaProgramas
+import cl.duoc.albalab.ui.screens.PantallaRegistro
 import cl.duoc.albalab.viewmodel.RegistroViewModel
 import androidx.compose.ui.unit.dp
-import cl.duoc.albalab.ui.PantallaEditarRegistro
-import cl.duoc.albalab.ui.PantallaMisRegistros
+import cl.duoc.albalab.ui.screens.PantallaEditarRegistro
+import cl.duoc.albalab.ui.screens.PantallaMisRegistros
 
 object Rutas {
     const val INICIO = "inicio"

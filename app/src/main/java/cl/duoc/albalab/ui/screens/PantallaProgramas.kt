@@ -1,4 +1,4 @@
-package cl.duoc.albalab.ui
+package cl.duoc.albalab.ui.screens
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import cl.duoc.albalab.data.ContenidoFicticio
+import cl.duoc.albalab.data.local.ContenidoFicticio
 
 @Composable
 fun PantallaProgramas(

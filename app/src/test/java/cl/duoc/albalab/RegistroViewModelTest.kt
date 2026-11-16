@@ -1,10 +1,10 @@
 package cl.duoc.albalab
 
-import cl.duoc.albalab.data.RegistroDao
-import cl.duoc.albalab.data.RegistroRepository
-import cl.duoc.albalab.model.ContactoPreferido
-import cl.duoc.albalab.model.RegistroInteres
-import cl.duoc.albalab.model.TipoAyuda
+import cl.duoc.albalab.data.local.RegistroDao
+import cl.duoc.albalab.repository.RegistroRepository
+import cl.duoc.albalab.data.model.ContactoPreferido
+import cl.duoc.albalab.data.model.RegistroInteres
+import cl.duoc.albalab.data.model.TipoAyuda
 import cl.duoc.albalab.viewmodel.Campo
 import cl.duoc.albalab.viewmodel.RegistroViewModel
 import java.text.SimpleDateFormat

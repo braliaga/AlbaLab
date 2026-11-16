@@ -1,6 +1,7 @@
-package cl.duoc.albalab.data
+package cl.duoc.albalab.repository
 
-import cl.duoc.albalab.model.RegistroInteres
+import cl.duoc.albalab.data.local.RegistroDao
+import cl.duoc.albalab.data.model.RegistroInteres
 import kotlinx.coroutines.flow.Flow
 
 // Aquí se reemplazaría el DAO por llamadas a la API REST de CORPALIV

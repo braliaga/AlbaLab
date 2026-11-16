@@ -1,7 +1,7 @@
 package cl.duoc.albalab
 
-import cl.duoc.albalab.model.ContactoPreferido
-import cl.duoc.albalab.model.TipoAyuda
+import cl.duoc.albalab.data.model.ContactoPreferido
+import cl.duoc.albalab.data.model.TipoAyuda
 import cl.duoc.albalab.viewmodel.Validaciones
 import java.text.SimpleDateFormat
 import java.util.Locale

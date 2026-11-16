@@ -1,4 +1,4 @@
-package cl.duoc.albalab.ui
+package cl.duoc.albalab.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import cl.duoc.albalab.model.ContactoPreferido
+import cl.duoc.albalab.data.model.ContactoPreferido
 import cl.duoc.albalab.ui.componentes.CampoValidado
 import cl.duoc.albalab.viewmodel.Campo
 import cl.duoc.albalab.viewmodel.RegistroViewModel

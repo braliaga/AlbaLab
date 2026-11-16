@@ -1,6 +1,6 @@
-package cl.duoc.albalab.data
+package cl.duoc.albalab.data.local
 
-import cl.duoc.albalab.model.*
+import cl.duoc.albalab.data.model.*
 
 object ContenidoFicticio {
 

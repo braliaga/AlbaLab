@@ -1,4 +1,4 @@
-package cl.duoc.albalab.model
+package cl.duoc.albalab.data.model
 
 enum class TipoAyuda(val etiqueta: String) {
     DONACION("Donación"),

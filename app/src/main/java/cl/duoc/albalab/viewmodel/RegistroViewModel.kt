@@ -7,11 +7,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import cl.duoc.albalab.data.AppDatabase
-import cl.duoc.albalab.data.RegistroRepository
-import cl.duoc.albalab.model.ContactoPreferido
-import cl.duoc.albalab.model.RegistroInteres
-import cl.duoc.albalab.model.TipoAyuda
+import cl.duoc.albalab.data.local.AppDatabase
+import cl.duoc.albalab.repository.RegistroRepository
+import cl.duoc.albalab.data.model.ContactoPreferido
+import cl.duoc.albalab.data.model.RegistroInteres
+import cl.duoc.albalab.data.model.TipoAyuda
 import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

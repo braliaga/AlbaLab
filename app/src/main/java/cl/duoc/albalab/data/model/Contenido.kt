@@ -1,4 +1,4 @@
-package cl.duoc.albalab.model
+package cl.duoc.albalab.data.model
 
 data class ProgramaInfo(
     val id: Int,

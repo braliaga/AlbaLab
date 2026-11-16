@@ -4,11 +4,11 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import cl.duoc.albalab.data.AppDatabase
-import cl.duoc.albalab.data.RegistroDao
-import cl.duoc.albalab.model.ContactoPreferido
-import cl.duoc.albalab.model.RegistroInteres
-import cl.duoc.albalab.model.TipoAyuda
+import cl.duoc.albalab.data.local.AppDatabase
+import cl.duoc.albalab.data.local.RegistroDao
+import cl.duoc.albalab.data.model.ContactoPreferido
+import cl.duoc.albalab.data.model.RegistroInteres
+import cl.duoc.albalab.data.model.TipoAyuda
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After

@@ -1,10 +1,10 @@
-package cl.duoc.albalab.data
+package cl.duoc.albalab.data.local
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import cl.duoc.albalab.model.RegistroInteres
+import cl.duoc.albalab.data.model.RegistroInteres
 import kotlinx.coroutines.flow.Flow
 
 @Dao

@@ -1,4 +1,4 @@
-package cl.duoc.albalab.ui
+package cl.duoc.albalab.ui.componentes
 
 import android.Manifest
 import android.net.Uri

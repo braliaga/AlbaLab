@@ -31,18 +31,18 @@ Patrón **MVVM**: la interfaz observa el estado del `ViewModel`, este valida con
 ```
 cl/duoc/albalab/
 ├── MainActivity.kt          solo AppNavegacion() dentro del tema
-├── model/                   TipoAyuda, ContactoPreferido, RegistroInteres, Contenido
-├── data/                    RegistroDao, AppDatabase, RegistroRepository, ContenidoFicticio
+├── data/
+│   ├── model/               TipoAyuda, ContactoPreferido, RegistroInteres, Contenido
+│   └── local/               RegistroDao, AppDatabase, ContenidoFicticio
+├── repository/              RegistroRepository
 ├── viewmodel/               Validaciones, RegistroViewModel
 ├── utils/                   ImagenStorage (archivos de fotos con FileProvider)
 └── ui/
     ├── theme/               colores, tipografía y tema
     ├── navegacion/          AppNavegacion (rutas y transiciones)
-    ├── componentes/         CampoValidado, ImagenRemota
-    ├── PantallaInicio, PantallaProgramas, PantallaCatalogo
-    ├── PantallaRegistro, SelectorFoto
-    ├── PantallaMisRegistros
-    └── PantallaEditarRegistro
+    ├── componentes/         CampoValidado, ImagenRemota, SelectorFoto
+    └── screens/             PantallaInicio, PantallaProgramas, PantallaCatalogo,
+                             PantallaRegistro, PantallaMisRegistros, PantallaEditarRegistro
 ```
 
 - **Model:** entidad `RegistroInteres` y enums `TipoAyuda` y `ContactoPreferido`.

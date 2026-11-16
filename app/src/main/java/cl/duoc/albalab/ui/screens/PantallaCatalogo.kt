@@ -1,4 +1,4 @@
-package cl.duoc.albalab.ui
+package cl.duoc.albalab.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import cl.duoc.albalab.data.ContenidoFicticio
+import cl.duoc.albalab.data.local.ContenidoFicticio
 
 @Composable
 fun PantallaCatalogo(
