@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -18,7 +17,6 @@ import cl.duoc.albalab.ui.screens.PantallaCatalogo
 import cl.duoc.albalab.ui.screens.PantallaInicio
 import cl.duoc.albalab.ui.screens.PantallaProgramas
 import cl.duoc.albalab.ui.screens.PantallaRegistro
-import cl.duoc.albalab.viewmodel.RegistroViewModel
 import androidx.compose.ui.unit.dp
 import cl.duoc.albalab.ui.screens.PantallaEditarRegistro
 import cl.duoc.albalab.ui.screens.PantallaMisRegistros
@@ -38,9 +36,6 @@ fun AppNavegacion() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
-
-    // Una sola instancia del ViewModel, compartida por registro, lista y edición
-    val viewModel: RegistroViewModel = viewModel(factory = RegistroViewModel.Factory)
 
     Scaffold(
         topBar = {
@@ -84,7 +79,6 @@ fun AppNavegacion() {
             }
             composable(Rutas.REGISTRO) {
                 PantallaRegistro(
-                    vm = viewModel,
                     onVerRegistros = { navController.navigate(Rutas.REGISTROS) {
                         popUpTo(Rutas.INICIO) // Limpia el stack para no volver al registro completado
                     } }
@@ -92,7 +86,6 @@ fun AppNavegacion() {
             }
             composable(route = Rutas.REGISTROS) {
                 PantallaMisRegistros(
-                    vm = viewModel,
                     onEditar = { id -> navController.navigate("editar/$id") }
                 )
             }
@@ -101,11 +94,8 @@ fun AppNavegacion() {
                 arguments = listOf(androidx.navigation.navArgument("id") {
                     type = androidx.navigation.NavType.IntType
                 })
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getInt("id") ?: 0
+            ) {
                 PantallaEditarRegistro(
-                    id = id,
-                    vm = viewModel,
                     onVolver = { navController.navigateUp() }
                 )
             }
