@@ -29,7 +29,7 @@ fun SelectorFoto(
     val imagenStorage = remember { ImagenStorage(context) }
     // rememberSaveable: si se rota la pantalla con la cámara abierta, no se pierde el destino de la foto.
     var uriTemporal by rememberSaveable { mutableStateOf<Uri?>(null) }
-    var mensaje by remember { mutableStateOf<String?>(null) }
+    var mensaje by rememberSaveable { mutableStateOf<String?>(null) }
 
     val launcherCamara = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
