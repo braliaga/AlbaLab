@@ -1,27 +1,40 @@
 package cl.duoc.albalab.ui.navegacion
 
-import androidx.compose.animation.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import cl.duoc.albalab.ui.screens.PantallaCatalogo
+import cl.duoc.albalab.ui.screens.PantallaEditarRegistro
 import cl.duoc.albalab.ui.screens.PantallaInicio
+import cl.duoc.albalab.ui.screens.PantallaMisRegistros
 import cl.duoc.albalab.ui.screens.PantallaProgramas
 import cl.duoc.albalab.ui.screens.PantallaRegistro
+import cl.duoc.albalab.viewmodel.ContenidoViewModel
 import cl.duoc.albalab.viewmodel.RegistroViewModel
-import androidx.compose.ui.unit.dp
-import cl.duoc.albalab.ui.screens.PantallaEditarRegistro
-import cl.duoc.albalab.ui.screens.PantallaMisRegistros
 
 object Rutas {
     const val INICIO = "inicio"
@@ -39,17 +52,32 @@ fun AppNavegacion() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
 
-    // Una sola instancia del ViewModel, compartida por registro, lista y edición
-    val viewModel: RegistroViewModel = viewModel(factory = RegistroViewModel.Factory)
+    // ViewModels: uno para registros (Branco) y uno para contenido informativo (tuyo)
+    val registroViewModel: RegistroViewModel = viewModel(factory = RegistroViewModel.Factory)
+    val contenidoViewModel: ContenidoViewModel = viewModel()
+    val contenidoState by contenidoViewModel.uiState.collectAsState()
+
+    val tituloActual = when (rutaActual) {
+        Rutas.INICIO -> "Alba Lab"
+        Rutas.PROGRAMAS -> "Programas e Impacto"
+        Rutas.CATALOGO -> "Catálogo Solidario"
+        Rutas.REGISTRO -> "Quiero Colaborar"
+        Rutas.REGISTROS -> "Mis Registros"
+        Rutas.EDITAR -> "Editar Registro"
+        else -> "Alba Lab"
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Alba Lab") },
+                title = { Text(tituloActual) },
                 navigationIcon = {
                     if (rutaActual != Rutas.INICIO && rutaActual != null) {
                         IconButton(onClick = { navController.navigateUp() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver"
+                            )
                         }
                     }
                 },
@@ -70,6 +98,7 @@ fun AppNavegacion() {
         ) {
             composable(Rutas.INICIO) {
                 PantallaInicio(
+                    estado = contenidoState,
                     onVerProgramas = { navController.navigate(Rutas.PROGRAMAS) },
                     onVerCatalogo = { navController.navigate(Rutas.CATALOGO) },
                     onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) },
@@ -77,35 +106,43 @@ fun AppNavegacion() {
                 )
             }
             composable(Rutas.PROGRAMAS) {
-                PantallaProgramas(onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) })
+                PantallaProgramas(
+                    estado = contenidoState,
+                    onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) }
+                )
             }
             composable(Rutas.CATALOGO) {
-                PantallaCatalogo(onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) })
+                PantallaCatalogo(
+                    estado = contenidoState,
+                    onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) }
+                )
             }
             composable(Rutas.REGISTRO) {
                 PantallaRegistro(
-                    vm = viewModel,
-                    onVerRegistros = { navController.navigate(Rutas.REGISTROS) {
-                        popUpTo(Rutas.INICIO) // Limpia el stack para no volver al registro completado
-                    } }
+                    vm = registroViewModel,
+                    onVerRegistros = {
+                        navController.navigate(Rutas.REGISTROS) {
+                            popUpTo(Rutas.INICIO)
+                        }
+                    }
                 )
             }
             composable(route = Rutas.REGISTROS) {
                 PantallaMisRegistros(
-                    vm = viewModel,
+                    vm = registroViewModel,
                     onEditar = { id -> navController.navigate("editar/$id") }
                 )
             }
             composable(
                 route = Rutas.EDITAR,
-                arguments = listOf(androidx.navigation.navArgument("id") {
-                    type = androidx.navigation.NavType.IntType
+                arguments = listOf(navArgument("id") {
+                    type = NavType.IntType
                 })
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getInt("id") ?: 0
                 PantallaEditarRegistro(
                     id = id,
-                    vm = viewModel,
+                    vm = registroViewModel,
                     onVolver = { navController.navigateUp() }
                 )
             }
