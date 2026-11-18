@@ -16,4 +16,11 @@ class ContenidoRepository {
     fun obtenerCatalogo(): List<ProductoCatalogo> = ContenidoFicticio.catalogoProductos
 
     fun obtenerIndicadores(): List<IndicadorImpacto> = ContenidoFicticio.indicadores
+
+    fun obtenerBannerInicioUrl(): String = ContenidoFicticio.bannerInicioUrl
+
+    fun obtenerPropositoInstitucional(): String = ContenidoFicticio.propositoInstitucional
+
+    fun obtenerDestinoAportes() = ContenidoFicticio.destinoAportes
+
 }
