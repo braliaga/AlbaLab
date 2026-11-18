@@ -1,10 +1,11 @@
 package cl.duoc.albalab.ui.navegacion
 
+import android.widget.Toast
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -20,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -33,6 +36,7 @@ import cl.duoc.albalab.ui.screens.PantallaInicio
 import cl.duoc.albalab.ui.screens.PantallaMisRegistros
 import cl.duoc.albalab.ui.screens.PantallaProgramas
 import cl.duoc.albalab.ui.screens.PantallaRegistro
+import cl.duoc.albalab.utils.autenticarConBiometria
 import cl.duoc.albalab.viewmodel.ContenidoViewModel
 import cl.duoc.albalab.viewmodel.RegistroViewModel
 
@@ -49,6 +53,7 @@ object Rutas {
 @Composable
 fun AppNavegacion() {
     val navController = rememberNavController()
+    val contexto = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
 
@@ -102,7 +107,18 @@ fun AppNavegacion() {
                     onVerProgramas = { navController.navigate(Rutas.PROGRAMAS) },
                     onVerCatalogo = { navController.navigate(Rutas.CATALOGO) },
                     onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) },
-                    onVerRegistros = { navController.navigate(Rutas.REGISTROS) }
+                    onVerRegistros = {
+                        val activity = contexto as? FragmentActivity
+                        if (activity != null) {
+                            autenticarConBiometria(
+                                activity = activity,
+                                onExito = { navController.navigate(Rutas.REGISTROS) },
+                                onError = { mensaje ->
+                                    Toast.makeText(contexto, mensaje, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    }
                 )
             }
             composable(Rutas.PROGRAMAS) {
