@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.duoc.albalab.ui.componentes.ContenedorPantalla
 import cl.duoc.albalab.viewmodel.ContenidoState
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun PantallaProgramas(
@@ -44,7 +45,7 @@ fun PantallaProgramas(
     onQuieroColaborar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expandidoId by remember { mutableStateOf<Int?>(null) }
+    var expandidoId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Box(modifier = modifier.fillMaxSize()) {
         ContenedorPantalla(
