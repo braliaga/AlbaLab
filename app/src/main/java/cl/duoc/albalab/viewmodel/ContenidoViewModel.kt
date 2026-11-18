@@ -2,6 +2,7 @@ package cl.duoc.albalab.viewmodel
 
 import androidx.lifecycle.ViewModel
 import cl.duoc.albalab.data.model.CasoExito
+import cl.duoc.albalab.data.model.DestinoAporte
 import cl.duoc.albalab.data.model.IndicadorImpacto
 import cl.duoc.albalab.data.model.ProductoCatalogo
 import cl.duoc.albalab.data.model.ProgramaInfo
@@ -11,8 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 data class ContenidoState(
+    val bannerInicioUrl: String = "",
+    val propositoInstitucional: String = "",
     val programas: List<ProgramaInfo> = emptyList(),
     val casosExito: List<CasoExito> = emptyList(),
+    val destinoAportes: List<DestinoAporte> = emptyList(),
     val catalogo: List<ProductoCatalogo> = emptyList(),
     val indicadores: List<IndicadorImpacto> = emptyList()
 )
