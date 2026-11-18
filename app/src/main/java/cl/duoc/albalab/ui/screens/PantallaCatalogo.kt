@@ -1,5 +1,6 @@
 package cl.duoc.albalab.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -26,9 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import cl.duoc.albalab.ui.componentes.ContenedorPantalla
 import cl.duoc.albalab.ui.componentes.ImagenRemota
 import cl.duoc.albalab.utils.aPesosChilenos
 import cl.duoc.albalab.viewmodel.ContenidoState
@@ -39,17 +43,22 @@ fun PantallaCatalogo(
     onQuieroColaborar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        ContenedorPantalla(
-            permitirScroll = false,
-            paddingVertical = 0.dp
+    val esHorizontal = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val columnas = if (esHorizontal) 2 else 1
+
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columnas),
+            modifier = Modifier
+                .widthIn(max = if (esHorizontal) 900.dp else 600.dp)
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column {
                     Text(
                         text = "Catálogo con Sentido",
                         style = MaterialTheme.typography.titleLarge,
@@ -61,37 +70,37 @@ fun PantallaCatalogo(
                     )
                     Spacer(Modifier.height(8.dp))
                 }
+            }
 
-                items(estado.catalogo) { prod ->
-                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Row(
+            items(estado.catalogo) { prod ->
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ImagenRemota(
+                            url = prod.imagenUrl,
+                            descripcion = "Imagen de ${prod.nombre}",
                             modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ImagenRemota(
-                                url = prod.imagenUrl,
-                                descripcion = "Imagen de ${prod.nombre}",
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(RoundedCornerShape(12.dp))
+                                .size(72.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = prod.nombre,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
                             )
-                            Spacer(Modifier.width(16.dp))
-                            Column {
-                                Text(
-                                    text = prod.nombre,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(prod.descripcion, style = MaterialTheme.typography.bodySmall)
-                                Text(
-                                    text = prod.precioClp.aPesosChilenos(),
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
+                            Text(prod.descripcion, style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                text = prod.precioClp.aPesosChilenos(),
+                                color = MaterialTheme.colorScheme.tertiary,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }
