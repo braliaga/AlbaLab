@@ -23,13 +23,15 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegistroViewModelTest {
     private lateinit var dao: FakeRegistroDao
+    private lateinit var notificador: FakeNotificador
     private lateinit var vm: RegistroViewModel
 
     @Before
     fun preparar() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         dao = FakeRegistroDao()
-        vm = RegistroViewModel(RegistroRepository(dao))
+        notificador = FakeNotificador()
+        vm = RegistroViewModel(RegistroRepository(dao), notificador)
     }
 
     @After
@@ -70,6 +72,22 @@ class RegistroViewModelTest {
         assertFalse(s.guardando)
         assertEquals("", s.nombre)
         assertTrue(s.errores.isEmpty())
+    }
+
+    @Test
+    fun guardarFormularioValidoNotificaConElNombre() {
+        llenarFormularioValido()
+
+        vm.guardar()
+
+        assertEquals(listOf("Ana Pérez"), notificador.nombres)
+    }
+
+    @Test
+    fun guardarFormularioVacioNoNotifica() {
+        vm.guardar()
+
+        assertTrue(notificador.nombres.isEmpty())
     }
 
     @Test

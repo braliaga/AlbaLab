@@ -1,5 +1,10 @@
 package cl.duoc.albalab.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,14 +23,20 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.albalab.data.model.ContactoPreferido
 import cl.duoc.albalab.data.model.TipoAyuda
@@ -47,6 +58,8 @@ fun PantallaRegistro(
 ) {
     val s by vm.formulario.collectAsState()
     val teclado = KeyboardOptions(keyboardType = KeyboardType.Number)
+
+    PedirPermisoNotificaciones()
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
@@ -176,6 +189,27 @@ fun PantallaRegistro(
                     Button(onClick = onVerRegistros) { Text("Ver registros") }
                 }
             }
+        }
+    }
+}
+
+// Pide el permiso de notificaciones una sola vez al entrar (Android 13+). Si se deniega no se muestra nada:
+// el registro se guarda igual y el mensaje de éxito en pantalla ya informa.
+@Composable
+private fun PedirPermisoNotificaciones() {
+    if (Build.VERSION.SDK_INT < 33) return
+
+    val context = LocalContext.current
+    // rememberSaveable: al rotar la pantalla no se vuelve a preguntar.
+    var yaPedido by rememberSaveable { mutableStateOf(false) }
+    val launcherPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    LaunchedEffect(Unit) {
+        val concedido = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!yaPedido && !concedido) {
+            yaPedido = true
+            launcherPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }
