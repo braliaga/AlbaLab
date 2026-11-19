@@ -4,26 +4,18 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,21 +23,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.albalab.data.model.ContactoPreferido
 import cl.duoc.albalab.data.model.TipoAyuda
 import cl.duoc.albalab.ui.componentes.CampoValidado
+import cl.duoc.albalab.ui.componentes.FilaCheckbox
+import cl.duoc.albalab.ui.componentes.FilaSwitch
+import cl.duoc.albalab.ui.componentes.GrupoRadio
+import cl.duoc.albalab.ui.componentes.MensajeError
 import cl.duoc.albalab.ui.componentes.SelectorFoto
 import cl.duoc.albalab.viewmodel.Campo
 import cl.duoc.albalab.viewmodel.RegistroViewModel
+import coil.compose.AsyncImage
 
 @Composable
 fun PantallaRegistro(
-    vm: RegistroViewModel,
     onVerRegistros: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    vm: RegistroViewModel = viewModel(factory = RegistroViewModel.Factory)
 ) {
     val s by vm.formulario.collectAsState()
     val teclado = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -107,69 +105,50 @@ fun PantallaRegistro(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text("¿Cómo prefieres que te contactemos?", style = MaterialTheme.typography.titleMedium)
-            ContactoPreferido.entries.forEach { opcion ->
-                FilaRadio(
-                    texto = opcion.etiqueta,
-                    seleccionado = s.contacto == opcion,
-                    onClick = { vm.onContacto(opcion) }
-                )
-            }
-            MensajeError(s.errores[Campo.CONTACTO])
+            GrupoRadio(
+                titulo = "¿Cómo prefieres que te contactemos?",
+                opciones = ContactoPreferido.entries,
+                seleccionado = s.contacto,
+                etiqueta = { it.etiqueta },
+                onSeleccion = vm::onContacto,
+                error = s.errores[Campo.CONTACTO]
+            )
 
-            Text("¿Cómo quieres ayudar?", style = MaterialTheme.typography.titleMedium)
-            TipoAyuda.entries.forEach { opcion ->
-                FilaRadio(
-                    texto = opcion.etiqueta,
-                    seleccionado = s.tipoAyuda == opcion,
-                    onClick = { vm.onTipoAyuda(opcion) }
-                )
-            }
-            MensajeError(s.errores[Campo.TIPO_AYUDA])
+            GrupoRadio(
+                titulo = "¿Cómo quieres ayudar?",
+                opciones = TipoAyuda.entries,
+                seleccionado = s.tipoAyuda,
+                etiqueta = { it.etiqueta },
+                onSeleccion = vm::onTipoAyuda,
+                error = s.errores[Campo.TIPO_AYUDA]
+            )
 
             Text("Foto de perfil (opcional)", style = MaterialTheme.typography.titleMedium)
             SelectorFoto(onFotoSeleccionada = { uri -> vm.onFoto(uri.toString()) })
             if (s.fotoPath != null) {
-                coil.compose.AsyncImage(
+                AsyncImage(
                     model = s.fotoPath,
                     contentDescription = "Foto seleccionada",
                     modifier = Modifier
                         .size(100.dp)
                         .align(Alignment.CenterHorizontally)
-                        .clip(androidx.compose.foundation.shape.CircleShape),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = s.aceptaContacto,
-                        onValueChange = vm::onAceptaContacto,
-                        role = Role.Checkbox
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(checked = s.aceptaContacto, onCheckedChange = null)
-                Text("Acepto que me contacten", modifier = Modifier.padding(start = 8.dp))
-            }
+            FilaCheckbox(
+                texto = "Acepto que me contacten",
+                marcado = s.aceptaContacto,
+                onCambio = vm::onAceptaContacto
+            )
             MensajeError(s.errores[Campo.ACEPTA])
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = s.recibeNovedades,
-                        onValueChange = vm::onRecibeNovedades,
-                        role = Role.Switch
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Quiero recibir novedades")
-                Switch(checked = s.recibeNovedades, onCheckedChange = null)
-            }
+            FilaSwitch(
+                texto = "Quiero recibir novedades",
+                activo = s.recibeNovedades,
+                onCambio = vm::onRecibeNovedades
+            )
 
             Button(
                 onClick = vm::guardar,
@@ -197,38 +176,6 @@ fun PantallaRegistro(
                     Button(onClick = onVerRegistros) { Text("Ver registros") }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun FilaRadio(texto: String, seleccionado: Boolean, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .selectable(selected = seleccionado, onClick = onClick, role = Role.RadioButton),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(selected = seleccionado, onClick = null)
-        Text(texto, modifier = Modifier.padding(start = 8.dp))
-    }
-}
-
-@Composable
-private fun MensajeError(mensaje: String?) {
-    AnimatedVisibility(visible = mensaje != null) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Filled.Warning,
-                contentDescription = mensaje,
-                tint = MaterialTheme.colorScheme.error
-            )
-            Text(
-                mensaje ?: "",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 8.dp)
-            )
         }
     }
 }

@@ -20,7 +20,7 @@ object Validaciones {
 
     fun telefono(valor: String): String? =
         if (valor.length == 9 && valor.all { it.isDigit() }) null
-        else "Solo se permiten 9 dígitos, sin espacios vacíos ni símbolos ni carácteres"
+        else "Ingresa 9 dígitos, sin espacios ni símbolos"
 
     fun correo(valor: String): String? =
         if (regexCorreo.matches(valor)) null

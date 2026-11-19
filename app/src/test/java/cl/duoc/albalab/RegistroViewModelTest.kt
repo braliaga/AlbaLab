@@ -1,9 +1,7 @@
 package cl.duoc.albalab
 
-import cl.duoc.albalab.data.local.RegistroDao
 import cl.duoc.albalab.repository.RegistroRepository
 import cl.duoc.albalab.data.model.ContactoPreferido
-import cl.duoc.albalab.data.model.RegistroInteres
 import cl.duoc.albalab.data.model.TipoAyuda
 import cl.duoc.albalab.viewmodel.Campo
 import cl.duoc.albalab.viewmodel.RegistroViewModel
@@ -12,8 +10,6 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -23,27 +19,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-
-class FakeRegistroDao : RegistroDao {
-    val lista = MutableStateFlow<List<RegistroInteres>>(emptyList())
-    var inserciones = 0
-        private set
-
-    override suspend fun insertar(r: RegistroInteres): Long {
-        inserciones++
-        val nuevo = r.copy(id = inserciones)
-        lista.value = listOf(nuevo) + lista.value
-        return nuevo.id.toLong()
-    }
-
-    override suspend fun actualizar(r: RegistroInteres) {
-        lista.value = lista.value.map { if (it.id == r.id) r else it }
-    }
-
-    override fun obtenerTodos(): Flow<List<RegistroInteres>> = lista
-
-    override suspend fun obtenerPorId(id: Int): RegistroInteres? = lista.value.firstOrNull { it.id == id }
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegistroViewModelTest {
@@ -102,31 +77,5 @@ class RegistroViewModelTest {
         vm.onCambio(Campo.TELEFONO, "12")
 
         assertEquals(setOf(Campo.TELEFONO), vm.formulario.value.errores.keys)
-    }
-
-    @Test
-    fun editarTelefonoSeRefleja() {
-        llenarFormularioValido()
-        vm.guardar()
-
-        vm.cargarEdicion(1)
-        vm.onEdicionTelefono("987654321")
-        vm.guardarEdicion()
-
-        assertEquals("987654321", dao.lista.value.first().telefono)
-        assertTrue(vm.edicion.value.guardadoOk)
-    }
-
-    @Test
-    fun reabrirEdicionLimpiaGuardadoOk() {
-        llenarFormularioValido()
-        vm.guardar()
-        vm.cargarEdicion(1)
-        vm.guardarEdicion()
-        assertTrue(vm.edicion.value.guardadoOk)
-
-        vm.cargarEdicion(1)
-
-        assertFalse(vm.edicion.value.guardadoOk)
     }
 }

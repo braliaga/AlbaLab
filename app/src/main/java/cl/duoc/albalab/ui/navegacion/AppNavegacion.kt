@@ -38,7 +38,6 @@ import cl.duoc.albalab.ui.screens.PantallaProgramas
 import cl.duoc.albalab.ui.screens.PantallaRegistro
 import cl.duoc.albalab.utils.autenticarConBiometria
 import cl.duoc.albalab.viewmodel.ContenidoViewModel
-import cl.duoc.albalab.viewmodel.RegistroViewModel
 
 object Rutas {
     const val INICIO = "inicio"
@@ -57,8 +56,8 @@ fun AppNavegacion() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
 
-    // ViewModels: uno para registros (Branco) y uno para contenido informativo (tuyo)
-    val registroViewModel: RegistroViewModel = viewModel(factory = RegistroViewModel.Factory)
+    // El contenido informativo se comparte entre Inicio, Programas y Catálogo.
+    // Registro, MisRegistros y Editar crean su propio ViewModel dentro de cada pantalla.
     val contenidoViewModel: ContenidoViewModel = viewModel()
     val contenidoState by contenidoViewModel.uiState.collectAsState()
 
@@ -135,17 +134,15 @@ fun AppNavegacion() {
             }
             composable(Rutas.REGISTRO) {
                 PantallaRegistro(
-                    vm = registroViewModel,
                     onVerRegistros = {
                         navController.navigate(Rutas.REGISTROS) {
-                            popUpTo(Rutas.INICIO)
+                            popUpTo(Rutas.INICIO) // Limpia el stack para no volver al registro completado
                         }
                     }
                 )
             }
             composable(route = Rutas.REGISTROS) {
                 PantallaMisRegistros(
-                    vm = registroViewModel,
                     onEditar = { id -> navController.navigate("editar/$id") }
                 )
             }
@@ -154,11 +151,9 @@ fun AppNavegacion() {
                 arguments = listOf(navArgument("id") {
                     type = NavType.IntType
                 })
-            ) { backStackEntry ->
-                val id = backStackEntry.arguments?.getInt("id") ?: 0
+            ) {
+                // El id llega a EdicionViewModel por SavedStateHandle.
                 PantallaEditarRegistro(
-                    id = id,
-                    vm = registroViewModel,
                     onVolver = { navController.navigateUp() }
                 )
             }

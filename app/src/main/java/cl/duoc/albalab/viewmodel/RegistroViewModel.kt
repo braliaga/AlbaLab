@@ -1,27 +1,20 @@
 package cl.duoc.albalab.viewmodel
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import cl.duoc.albalab.data.local.AppDatabase
-import cl.duoc.albalab.repository.RegistroRepository
 import cl.duoc.albalab.data.model.ContactoPreferido
 import cl.duoc.albalab.data.model.RegistroInteres
 import cl.duoc.albalab.data.model.TipoAyuda
+import cl.duoc.albalab.repository.RegistroRepository
 import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-enum class Campo { NOMBRE, TELEFONO, CORREO, DIRECCION, PERSONAS, FECHA, CONTACTO, TIPO_AYUDA, ACEPTA }
 
 data class FormularioState(
     val nombre: String = "",
@@ -40,24 +33,9 @@ data class FormularioState(
     val guardadoOk: Boolean = false
 )
 
-data class EdicionState(
-    val id: Int = 0,
-    val telefono: String = "",
-    val contacto: ContactoPreferido? = null,
-    val recibeNovedades: Boolean = false,
-    val errores: Map<Campo, String> = emptyMap(),
-    val guardadoOk: Boolean = false
-)
-
 class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
     private val _formulario = MutableStateFlow(FormularioState())
     val formulario: StateFlow<FormularioState> = _formulario.asStateFlow()
-
-    private val _edicion = MutableStateFlow(EdicionState())
-    val edicion: StateFlow<EdicionState> = _edicion.asStateFlow()
-
-    val registros: StateFlow<List<RegistroInteres>> = repo.obtenerTodos()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun onCambio(campo: Campo, valor: String) {
         _formulario.update { s ->
@@ -101,7 +79,7 @@ class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
 
     fun guardar() {
         val s = _formulario.value
-        val errores = mapOf(
+        val errores = soloErrores(
             Campo.NOMBRE to Validaciones.nombre(s.nombre),
             Campo.TELEFONO to Validaciones.telefono(s.telefono),
             Campo.CORREO to Validaciones.correo(s.correo),
@@ -111,7 +89,7 @@ class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
             Campo.CONTACTO to Validaciones.contacto(s.contacto),
             Campo.TIPO_AYUDA to Validaciones.tipoAyuda(s.tipoAyuda),
             Campo.ACEPTA to Validaciones.aceptaContacto(s.aceptaContacto)
-        ).mapNotNull { (campo, error) -> error?.let { campo to it } }.toMap()
+        )
 
         if (errores.isNotEmpty()) {
             _formulario.update { it.copy(errores = errores, guardadoOk = false) }
@@ -139,64 +117,9 @@ class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
         }
     }
 
-    fun cargarEdicion(id: Int) {
-        // Limpia el estado anterior antes de cargar: si no, guardadoOk = true de una edición previa cierra la pantalla.
-        _edicion.value = EdicionState(id = id)
-        viewModelScope.launch {
-            val r = repo.obtenerPorId(id) ?: return@launch
-            _edicion.value = EdicionState(
-                id = r.id,
-                telefono = r.telefono,
-                contacto = r.contactoPreferido,
-                recibeNovedades = r.recibeNovedades
-            )
-        }
-    }
-
-    fun onEdicionTelefono(v: String) = _edicion.update {
-        it.copy(telefono = v, errores = it.errores.conError(Campo.TELEFONO, Validaciones.telefono(v)))
-    }
-
-    fun onEdicionContacto(c: ContactoPreferido) = _edicion.update {
-        it.copy(contacto = c, errores = it.errores - Campo.CONTACTO)
-    }
-
-    fun onEdicionNovedades(v: Boolean) = _edicion.update { it.copy(recibeNovedades = v) }
-
-    fun guardarEdicion() {
-        val e = _edicion.value
-        val errores = mapOf(
-            Campo.TELEFONO to Validaciones.telefono(e.telefono),
-            Campo.CONTACTO to Validaciones.contacto(e.contacto)
-        ).mapNotNull { (campo, error) -> error?.let { campo to it } }.toMap()
-
-        if (errores.isNotEmpty()) {
-            _edicion.update { it.copy(errores = errores) }
-            return
-        }
-
-        viewModelScope.launch {
-            val original = repo.obtenerPorId(e.id) ?: return@launch
-            repo.actualizar(
-                original.copy(
-                    telefono = e.telefono,
-                    contactoPreferido = e.contacto!!,
-                    recibeNovedades = e.recibeNovedades
-                )
-            )
-            _edicion.update { it.copy(errores = emptyMap(), guardadoOk = true) }
-        }
-    }
-
-    private fun Map<Campo, String>.conError(campo: Campo, error: String?): Map<Campo, String> =
-        if (error == null) this - campo else this + (campo to error)
-
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as Application
-                RegistroViewModel(RegistroRepository(AppDatabase.obtener(app).registroDao()))
-            }
+            initializer { RegistroViewModel(repositorio()) }
         }
     }
 }

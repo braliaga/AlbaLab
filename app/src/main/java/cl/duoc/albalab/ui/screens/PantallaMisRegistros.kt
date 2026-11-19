@@ -16,13 +16,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cl.duoc.albalab.viewmodel.RegistroViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cl.duoc.albalab.viewmodel.RegistrosViewModel
 
 @Composable
 fun PantallaMisRegistros(
-    vm: RegistroViewModel,
     onEditar: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    vm: RegistrosViewModel = viewModel(factory = RegistrosViewModel.Factory)
 ) {
     // Escuchamos la lista de la base de datos (Room)
     val registros by vm.registros.collectAsState(initial = emptyList())
