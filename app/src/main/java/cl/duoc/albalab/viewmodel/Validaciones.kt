@@ -56,6 +56,9 @@ object Validaciones {
     fun tipoAyuda(valor: TipoAyuda?): String? =
         if (valor == null) "Elige un tipo de ayuda" else null
 
+    fun clave(valor: String): String? =
+        if (valor.isBlank()) "Ingresa tu contraseña" else null
+
     fun aceptaContacto(valor: Boolean): String? =
         if (valor) null else "Debes aceptar que te contactemos para enviar el registro"
 

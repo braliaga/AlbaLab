@@ -9,6 +9,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.duoc.albalab.data.model.ContactoPreferido
 import cl.duoc.albalab.data.model.RegistroInteres
 import cl.duoc.albalab.data.model.TipoAyuda
+import cl.duoc.albalab.data.remote.RedAlbaLab
+import cl.duoc.albalab.repository.FeriadosRepository
 import cl.duoc.albalab.repository.RegistroRepository
 import cl.duoc.albalab.utils.Notificaciones
 import java.util.Date
@@ -34,12 +36,17 @@ data class FormularioState(
     val guardando: Boolean = false,
     val guardadoOk: Boolean = false,
     // Sube en cada envío rechazado; la pantalla lo usa para hacer scroll al primer campo con error.
-    val intentosFallidos: Int = 0
+    val intentosFallidos: Int = 0,
+    // Error al enviar a ms-vinculacion (sin conexión, error del servidor). El formulario conserva lo escrito.
+    val errorEnvio: String? = null,
+    // Aviso informativo de la API de feriados: no bloquea el envío.
+    val avisoFecha: String? = null
 )
 
 class RegistroViewModel(
     private val repo: RegistroRepository,
-    private val notificador: Notificador
+    private val notificador: Notificador,
+    private val feriados: FeriadosRepository
 ) : ViewModel() {
     private val _formulario = MutableStateFlow(FormularioState())
     val formulario: StateFlow<FormularioState> = _formulario.asStateFlow()
@@ -64,7 +71,23 @@ class RegistroViewModel(
                 Campo.FECHA -> Validaciones.fecha(valor, Date())
                 else -> null
             }
-            nuevo.copy(errores = nuevo.errores.conError(campo, error), guardadoOk = false)
+            nuevo.copy(
+                errores = nuevo.errores.conError(campo, error),
+                guardadoOk = false,
+                avisoFecha = if (campo == Campo.FECHA) null else nuevo.avisoFecha
+            )
+        }
+        if (campo == Campo.FECHA && Validaciones.fecha(valor, Date()) == null) revisarFeriado(valor)
+    }
+
+    // Consulta Nager.Date: si la fecha es feriado, avisa que el equipo no atiende ese día.
+    private fun revisarFeriado(fecha: String) {
+        viewModelScope.launch {
+            val feriado = feriados.feriadoEn(fecha) ?: return@launch
+            _formulario.update {
+                if (it.fecha != fecha) it
+                else it.copy(avisoFecha = "El $fecha es feriado (${feriado.nombre}): el equipo no atiende ese día.")
+            }
         }
     }
 
@@ -103,9 +126,9 @@ class RegistroViewModel(
             return
         }
 
-        _formulario.update { it.copy(errores = emptyMap(), guardando = true) }
+        _formulario.update { it.copy(errores = emptyMap(), guardando = true, errorEnvio = null) }
         viewModelScope.launch {
-            repo.insertar(
+            repo.crear(
                 RegistroInteres(
                     nombre = s.nombre.trim(),
                     telefono = s.telefono,
@@ -119,15 +142,25 @@ class RegistroViewModel(
                     recibeNovedades = s.recibeNovedades,
                     fotoPath = s.fotoPath
                 )
-            )
-            notificador.registroGuardado(s.nombre.trim())
-            _formulario.value = FormularioState(guardadoOk = true)
+            ).onSuccess {
+                // La notificación sale solo cuando el servidor confirmó el registro.
+                notificador.registroGuardado(s.nombre.trim())
+                _formulario.value = FormularioState(guardadoOk = true)
+            }.onFailure { e ->
+                _formulario.update { it.copy(guardando = false, errorEnvio = e.mensaje()) }
+            }
         }
     }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer { RegistroViewModel(repositorio(), Notificaciones(this[APPLICATION_KEY]!!)) }
+            initializer {
+                RegistroViewModel(
+                    repositorio(),
+                    Notificaciones(this[APPLICATION_KEY]!!),
+                    FeriadosRepository(RedAlbaLab.feriados)
+                )
+            }
         }
     }
 }
