@@ -1,29 +1,50 @@
 package cl.duoc.albalab.ui.navegacion
 
+import android.content.res.Configuration
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -48,6 +69,22 @@ object Rutas {
     const val EDITAR = "editar/{id}"
 }
 
+private data class Destino(val ruta: String, val etiqueta: String, val icono: ImageVector)
+
+// Pestañas de la barra inferior (o del rail en horizontal). EDITAR no es pestaña: es hija de REGISTROS.
+private val destinos = listOf(
+    Destino(Rutas.INICIO, "Inicio", Icons.Filled.Home),
+    Destino(Rutas.PROGRAMAS, "Programas", Icons.Filled.VolunteerActivism),
+    Destino(Rutas.CATALOGO, "Catálogo", Icons.Filled.Storefront),
+    Destino(Rutas.REGISTRO, "Colaborar", Icons.Filled.Favorite),
+    Destino(Rutas.REGISTROS, "Registros", Icons.Filled.Lock)
+)
+private val rutasPestana = destinos.map { it.ruta }.toSet()
+
+// Entre pestañas se usa fade-through; hacia y desde una pantalla hija se mantiene el deslizamiento.
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.cambioDePestana() =
+    initialState.destination.route in rutasPestana && targetState.destination.route in rutasPestana
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavegacion() {
@@ -55,11 +92,35 @@ fun AppNavegacion() {
     val contexto = LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = navBackStackEntry?.destination?.route
+    val esPestana = rutaActual in rutasPestana
+    val esHorizontal = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     // El contenido informativo se comparte entre Inicio, Programas y Catálogo.
     // Registro, MisRegistros y Editar crean su propio ViewModel dentro de cada pantalla.
     val contenidoViewModel: ContenidoViewModel = viewModel()
     val contenidoState by contenidoViewModel.uiState.collectAsState()
+
+    // Navegación de pestaña: no apila pantallas y conserva el estado de cada una.
+    fun navegarA(ruta: String) {
+        navController.navigate(ruta) {
+            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    // Único camino a REGISTROS: siempre pasa por la biometría.
+    fun irARegistros() {
+        if (rutaActual == Rutas.REGISTROS) return
+        val activity = contexto as? FragmentActivity ?: return
+        autenticarConBiometria(
+            activity = activity,
+            onExito = { navegarA(Rutas.REGISTROS) },
+            onError = { mensaje -> Toast.makeText(contexto, mensaje, Toast.LENGTH_SHORT).show() }
+        )
+    }
+
+    fun alTocarPestana(ruta: String) = if (ruta == Rutas.REGISTROS) irARegistros() else navegarA(ruta)
 
     val tituloActual = when (rutaActual) {
         Rutas.INICIO -> "Alba Lab"
@@ -76,7 +137,7 @@ fun AppNavegacion() {
             TopAppBar(
                 title = { Text(tituloActual) },
                 navigationIcon = {
-                    if (rutaActual != Rutas.INICIO && rutaActual != null) {
+                    if (rutaActual != null && !esPestana) {
                         IconButton(onClick = { navController.navigateUp() }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -84,78 +145,114 @@ fun AppNavegacion() {
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                }
             )
-        }
-    ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = Rutas.INICIO,
-            modifier = Modifier.padding(padding),
-            enterTransition = { slideInHorizontally(tween(300)) { it } + fadeIn(tween(300)) },
-            exitTransition = { slideOutHorizontally(tween(300)) { -it } + fadeOut(tween(300)) },
-            popEnterTransition = { slideInHorizontally(tween(300)) { -it } + fadeIn(tween(300)) },
-            popExitTransition = { slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300)) }
-        ) {
-            composable(Rutas.INICIO) {
-                PantallaInicio(
-                    estado = contenidoState,
-                    onVerProgramas = { navController.navigate(Rutas.PROGRAMAS) },
-                    onVerCatalogo = { navController.navigate(Rutas.CATALOGO) },
-                    onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) },
-                    onVerRegistros = {
-                        val activity = contexto as? FragmentActivity
-                        if (activity != null) {
-                            autenticarConBiometria(
-                                activity = activity,
-                                onExito = { navController.navigate(Rutas.REGISTROS) },
-                                onError = { mensaje ->
-                                    Toast.makeText(contexto, mensaje, Toast.LENGTH_SHORT).show()
-                                }
+        },
+        bottomBar = {
+            if (!esHorizontal) {
+                AnimatedVisibility(
+                    visible = esPestana,
+                    enter = slideInVertically(tween(200, easing = LinearOutSlowInEasing)) { it } +
+                        fadeIn(tween(200, easing = LinearOutSlowInEasing)),
+                    exit = slideOutVertically(tween(150, easing = FastOutLinearInEasing)) { it } +
+                        fadeOut(tween(150, easing = FastOutLinearInEasing))
+                ) {
+                    NavigationBar {
+                        destinos.forEach { d ->
+                            NavigationBarItem(
+                                selected = rutaActual == d.ruta,
+                                onClick = { alTocarPestana(d.ruta) },
+                                icon = { Icon(d.icono, contentDescription = null) },
+                                label = { Text(d.etiqueta) }
                             )
                         }
                     }
-                )
+                }
             }
-            composable(Rutas.PROGRAMAS) {
-                PantallaProgramas(
-                    estado = contenidoState,
-                    onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) }
-                )
-            }
-            composable(Rutas.CATALOGO) {
-                PantallaCatalogo(
-                    estado = contenidoState,
-                    onQuieroColaborar = { navController.navigate(Rutas.REGISTRO) }
-                )
-            }
-            composable(Rutas.REGISTRO) {
-                PantallaRegistro(
-                    onVerRegistros = {
-                        navController.navigate(Rutas.REGISTROS) {
-                            popUpTo(Rutas.INICIO) // Limpia el stack para no volver al registro completado
+        }
+    ) { padding ->
+        Row(modifier = Modifier.padding(padding)) {
+            if (esHorizontal) {
+                AnimatedVisibility(
+                    visible = esPestana,
+                    enter = slideInHorizontally(tween(200, easing = LinearOutSlowInEasing)) { -it } +
+                        fadeIn(tween(200, easing = LinearOutSlowInEasing)),
+                    exit = slideOutHorizontally(tween(150, easing = FastOutLinearInEasing)) { -it } +
+                        fadeOut(tween(150, easing = FastOutLinearInEasing))
+                ) {
+                    // Los insets ya vienen en el padding del Scaffold.
+                    NavigationRail(windowInsets = WindowInsets(0.dp)) {
+                        destinos.forEach { d ->
+                            NavigationRailItem(
+                                selected = rutaActual == d.ruta,
+                                onClick = { alTocarPestana(d.ruta) },
+                                icon = { Icon(d.icono, contentDescription = null) },
+                                label = { Text(d.etiqueta) }
+                            )
                         }
                     }
-                )
+                }
             }
-            composable(route = Rutas.REGISTROS) {
-                PantallaMisRegistros(
-                    onEditar = { id -> navController.navigate("editar/$id") }
-                )
-            }
-            composable(
-                route = Rutas.EDITAR,
-                arguments = listOf(navArgument("id") {
-                    type = NavType.IntType
-                })
+
+            NavHost(
+                navController = navController,
+                startDestination = Rutas.INICIO,
+                modifier = Modifier.weight(1f),
+                enterTransition = {
+                    if (cambioDePestana()) fadeIn(tween(200, easing = LinearOutSlowInEasing))
+                    else slideInHorizontally(tween(300)) { it } + fadeIn(tween(300))
+                },
+                exitTransition = {
+                    if (cambioDePestana()) fadeOut(tween(150, easing = FastOutLinearInEasing))
+                    else slideOutHorizontally(tween(300)) { -it } + fadeOut(tween(300))
+                },
+                popEnterTransition = {
+                    if (cambioDePestana()) fadeIn(tween(200, easing = LinearOutSlowInEasing))
+                    else slideInHorizontally(tween(300)) { -it } + fadeIn(tween(300))
+                },
+                popExitTransition = {
+                    if (cambioDePestana()) fadeOut(tween(150, easing = FastOutLinearInEasing))
+                    else slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300))
+                }
             ) {
-                // El id llega a EdicionViewModel por SavedStateHandle.
-                PantallaEditarRegistro(
-                    onVolver = { navController.navigateUp() }
-                )
+                composable(Rutas.INICIO) {
+                    PantallaInicio(
+                        estado = contenidoState,
+                        onVerProgramas = { navegarA(Rutas.PROGRAMAS) },
+                        onVerCatalogo = { navegarA(Rutas.CATALOGO) },
+                        onQuieroColaborar = { navegarA(Rutas.REGISTRO) },
+                        onVerRegistros = { irARegistros() }
+                    )
+                }
+                composable(Rutas.PROGRAMAS) {
+                    PantallaProgramas(
+                        estado = contenidoState,
+                        onQuieroColaborar = { navegarA(Rutas.REGISTRO) }
+                    )
+                }
+                composable(Rutas.CATALOGO) {
+                    PantallaCatalogo(
+                        estado = contenidoState,
+                        onQuieroColaborar = { navegarA(Rutas.REGISTRO) }
+                    )
+                }
+                composable(Rutas.REGISTRO) {
+                    PantallaRegistro(onVerRegistros = { irARegistros() })
+                }
+                composable(Rutas.REGISTROS) {
+                    PantallaMisRegistros(
+                        onEditar = { id -> navController.navigate("editar/$id") }
+                    )
+                }
+                composable(
+                    route = Rutas.EDITAR,
+                    arguments = listOf(navArgument("id") { type = NavType.IntType })
+                ) {
+                    // El id llega a EdicionViewModel por SavedStateHandle.
+                    PantallaEditarRegistro(
+                        onVolver = { navController.navigateUp() }
+                    )
+                }
             }
         }
     }
