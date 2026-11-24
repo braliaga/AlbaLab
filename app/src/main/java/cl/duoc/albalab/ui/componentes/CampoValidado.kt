@@ -9,6 +9,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun CampoValidado(
@@ -17,7 +19,9 @@ fun CampoValidado(
     etiqueta: String,
     error: String?,
     modifier: Modifier = Modifier,
-    teclado: KeyboardOptions = KeyboardOptions.Default
+    teclado: KeyboardOptions = KeyboardOptions.Default,
+    // true para contraseñas: muestra puntos en vez del texto.
+    ocultar: Boolean = false
 ) {
     OutlinedTextField(
         value = valor,
@@ -38,6 +42,8 @@ fun CampoValidado(
             }
         },
         keyboardOptions = teclado,
+        visualTransformation = if (ocultar) PasswordVisualTransformation() else VisualTransformation.None,
+        singleLine = true,
         modifier = modifier
     )
 }

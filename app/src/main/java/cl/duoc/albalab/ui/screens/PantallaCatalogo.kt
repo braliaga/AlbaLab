@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.duoc.albalab.ui.componentes.ImagenRemota
 import cl.duoc.albalab.utils.aPesosChilenos
+import cl.duoc.albalab.utils.equivalenteUfUsd
 import cl.duoc.albalab.viewmodel.ContenidoState
 
 @Composable
@@ -102,6 +103,14 @@ fun PantallaCatalogo(
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
+                            // Equivalencia con la UF y el dólar del día (API externa mindicador.cl).
+                            estado.economia?.let { e ->
+                                Text(
+                                    text = equivalenteUfUsd(prod.precioClp, e.uf, e.dolar),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }

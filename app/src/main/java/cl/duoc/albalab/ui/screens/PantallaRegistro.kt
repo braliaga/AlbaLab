@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -150,6 +151,17 @@ fun PantallaRegistro(
             error = s.errores[Campo.FECHA],
             modifier = enVista(Campo.FECHA)
         )
+        // API externa de feriados: informa, no bloquea. Color terciario para no confundirlo con un error.
+        AnimatedVisibility(visible = s.avisoFecha != null) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Filled.EventBusy, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+                Text(
+                    s.avisoFecha ?: "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
+        }
 
         Column(modifier = enVista(Campo.CONTACTO)) {
             GrupoRadio(
@@ -202,6 +214,9 @@ fun PantallaRegistro(
             onCambio = vm::onRecibeNovedades
         )
 
+        // Error al enviar a ms-vinculacion: los datos quedan escritos para reintentar.
+        MensajeError(s.errorEnvio)
+
         Button(
             onClick = {
                 focusManager.clearFocus() // cierra el teclado y quita el borde de foco antes de validar
@@ -222,7 +237,7 @@ fun PantallaRegistro(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Enviar registro")
+                    Text(if (s.errorEnvio != null) "Reintentar envío" else "Enviar registro")
                 }
             }
         }

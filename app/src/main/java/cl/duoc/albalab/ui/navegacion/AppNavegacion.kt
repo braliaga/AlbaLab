@@ -1,6 +1,12 @@
 package cl.duoc.albalab.ui.navegacion
 
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -53,7 +59,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import cl.duoc.albalab.ui.screens.PantallaCatalogo
 import cl.duoc.albalab.ui.screens.PantallaEditarRegistro
+import cl.duoc.albalab.data.remote.Sesion
 import cl.duoc.albalab.ui.screens.PantallaInicio
+import cl.duoc.albalab.ui.screens.PantallaLogin
 import cl.duoc.albalab.ui.screens.PantallaMisRegistros
 import cl.duoc.albalab.ui.screens.PantallaProgramas
 import cl.duoc.albalab.ui.screens.PantallaRegistro
@@ -67,7 +75,10 @@ object Rutas {
     const val REGISTRO = "registro"
     const val REGISTROS = "registros"
     const val EDITAR = "editar/{id}"
+    const val LOGIN = "login"
 }
+
+private const val PERMISO_RED_LOCAL = "android.permission.ACCESS_LOCAL_NETWORK"
 
 private data class Destino(val ruta: String, val etiqueta: String, val icono: ImageVector)
 
@@ -95,10 +106,23 @@ fun AppNavegacion() {
     val esPestana = rutaActual in rutasPestana
     val esHorizontal = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    // El contenido informativo se comparte entre Inicio, Programas y Catálogo.
-    // Registro, MisRegistros y Editar crean su propio ViewModel dentro de cada pantalla.
-    val contenidoViewModel: ContenidoViewModel = viewModel()
+    // El contenido informativo (ms-contenidos + APIs externas) se comparte entre Inicio, Programas y Catálogo.
+    // Registro, MisRegistros, Editar y Login crean su propio ViewModel dentro de cada pantalla.
+    val contenidoViewModel: ContenidoViewModel = viewModel(factory = ContenidoViewModel.Factory)
     val contenidoState by contenidoViewModel.uiState.collectAsState()
+
+    // Android 17 bloquea las conexiones a la red local (donde corre el backend) sin este permiso.
+    // Si se concede, se recarga el contenido; si se niega, la app sigue con la copia local y avisa en cada pantalla.
+    val permisoRedLocal = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        if (concedido) contenidoViewModel.cargar()
+    }
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= 37 &&
+            ContextCompat.checkSelfPermission(contexto, PERMISO_RED_LOCAL) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permisoRedLocal.launch(PERMISO_RED_LOCAL)
+        }
+    }
 
     // Navegación de pestaña: no apila pantallas y conserva el estado de cada una.
     fun navegarA(ruta: String) {
@@ -109,13 +133,21 @@ fun AppNavegacion() {
         }
     }
 
-    // Único camino a REGISTROS: siempre pasa por la biometría.
+    // Login del gestor. Desde una pantalla de gestión (sesión expirada) limpia la pila para no volver atrás a ella.
+    fun irALogin() {
+        navController.navigate(Rutas.LOGIN) {
+            popUpTo(Rutas.INICIO)
+            launchSingleTop = true
+        }
+    }
+
+    // Único camino a REGISTROS: biometría del dispositivo y, si no hay sesión, login con la cuenta del gestor (JWT).
     fun irARegistros() {
         if (rutaActual == Rutas.REGISTROS) return
         val activity = contexto as? FragmentActivity ?: return
         autenticarConBiometria(
             activity = activity,
-            onExito = { navegarA(Rutas.REGISTROS) },
+            onExito = { if (Sesion.activa) navegarA(Rutas.REGISTROS) else irALogin() },
             onError = { mensaje -> Toast.makeText(contexto, mensaje, Toast.LENGTH_SHORT).show() }
         )
     }
@@ -129,6 +161,7 @@ fun AppNavegacion() {
         Rutas.REGISTRO -> "Quiero Colaborar"
         Rutas.REGISTROS -> "Mis Registros"
         Rutas.EDITAR -> "Editar Registro"
+        Rutas.LOGIN -> "Ingreso gestor"
         else -> "Alba Lab"
     }
 
@@ -241,7 +274,8 @@ fun AppNavegacion() {
                 }
                 composable(Rutas.REGISTROS) {
                     PantallaMisRegistros(
-                        onEditar = { id -> navController.navigate("editar/$id") }
+                        onEditar = { id -> navController.navigate("editar/$id") },
+                        onSesionExpirada = { irALogin() }
                     )
                 }
                 composable(
@@ -250,7 +284,16 @@ fun AppNavegacion() {
                 ) {
                     // El id llega a EdicionViewModel por SavedStateHandle.
                     PantallaEditarRegistro(
-                        onVolver = { navController.navigateUp() }
+                        onVolver = { navController.navigateUp() },
+                        onSesionExpirada = { irALogin() }
+                    )
+                }
+                composable(Rutas.LOGIN) {
+                    PantallaLogin(
+                        onIngreso = {
+                            navController.popBackStack()
+                            navegarA(Rutas.REGISTROS)
+                        }
                     )
                 }
             }
