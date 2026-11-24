@@ -34,6 +34,9 @@ class ContenidoViewModel(
 
     private fun cargarContenido() {
         _uiState.value = ContenidoState(
+            bannerInicioUrl = repository.obtenerBannerInicioUrl(),
+            propositoInstitucional = repository.obtenerPropositoInstitucional(),
+            destinoAportes = repository.obtenerDestinoAportes(),
             programas = repository.obtenerProgramas(),
             casosExito = repository.obtenerCasosExito(),
             catalogo = repository.obtenerCatalogo(),
