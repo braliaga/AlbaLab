@@ -2,27 +2,12 @@ package cl.duoc.albalab.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val AzulProfundoAlba = Color(0xFF0D47A1)
-val SobreAzulBlanco = Color(0xFFFFFFFF)
-val AzulContenedorClaro = Color(0xFFD6E4FF)
-val SobreAzulContenedor = Color(0xFF001B3D)
+// Paleta tomada de albalab.corpaliv.cl: rojo de botones, amarillo de hover y fondo crema.
+val RojoAlba = Color(0xFFDD3117)
+val AmarilloAlba = Color(0xFFFDC609)
+val CremaAlba = Color(0xFFF7F0E7)
+val TextoAlba = Color(0xFF1D1D1B)
 
-val VerdeInclusion = Color(0xFF1B5E20)
-val SobreVerdeBlanco = Color(0xFFFFFFFF)
-val VerdeContenedorClaro = Color(0xFFC8E6C9)
-val SobreVerdeContenedor = Color(0xFF002105)
-
-val AmbarCalido = Color(0xFFB23C00)
-val FondoClaro = Color(0xFFF8F9FA)
-val SuperficieClara = Color(0xFFFFFFFF)
-val TextoOscuro = Color(0xFF1A1C1E)
-
-    
-val AzulClaroOscuro = Color(0xFFA8C8FF)
-val SobreAzulOscuro = Color(0xFF003062)
-val AzulContenedorOscuro = Color(0xFF00468A)
-val VerdeClaroOscuro = Color(0xFF81C784)
-val SobreVerdeOscuro = Color(0xFF00390E)
-val FondoOscuro = Color(0xFF121316)
-val SuperficieOscura = Color(0xFF1A1C1E)
-val TextoClaro = Color(0xFFE2E2E6)
+// Naranjo del menú (#EE6D1F) oscurecido: el puro no alcanza contraste AA como texto sobre fondo claro.
+val NaranjoTexto = Color(0xFFB4500F)
+val AmbarTexto = Color(0xFF7A5900)
