@@ -1,5 +1,6 @@
 package cl.duoc.albalab.utils
 
+import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -12,8 +13,13 @@ fun autenticarConBiometria(
     onExito: () -> Unit,
     onError: (String) -> Unit
 ) {
-    val autenticadores = BiometricManager.Authenticators.BIOMETRIC_STRONG or
-            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    // STRONG + DEVICE_CREDENTIAL no está soportado en API 28-29 y lanza IllegalArgumentException; WEAK sí.
+    val biometria = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        BiometricManager.Authenticators.BIOMETRIC_STRONG
+    } else {
+        BiometricManager.Authenticators.BIOMETRIC_WEAK
+    }
+    val autenticadores = biometria or BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
     val biometricManager = BiometricManager.from(activity)
     when (biometricManager.canAuthenticate(autenticadores)) {

@@ -1,5 +1,6 @@
 package cl.duoc.albalab.ui.componentes
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,8 @@ fun ContenedorPantalla(
     paddingHorizontal: Dp = 16.dp,
     paddingVertical: Dp = 16.dp,
     permitirScroll: Boolean = true,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
     Box(
@@ -38,6 +41,8 @@ fun ContenedorPantalla(
                 .fillMaxWidth()
                 .then(scrollModifier)
                 .padding(horizontal = paddingHorizontal, vertical = paddingVertical),
+            verticalArrangement = verticalArrangement,
+            horizontalAlignment = horizontalAlignment,
             content = contenido
         )
     }
