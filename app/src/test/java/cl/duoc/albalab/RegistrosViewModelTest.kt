@@ -1,20 +1,29 @@
 package cl.duoc.albalab
 
-import cl.duoc.albalab.data.model.ContactoPreferido
-import cl.duoc.albalab.data.model.RegistroInteres
+import cl.duoc.albalab.Fixtures.dto
+import cl.duoc.albalab.Fixtures.registro
 import cl.duoc.albalab.data.model.TipoAyuda
+import cl.duoc.albalab.data.remote.ApiAlbaLab
+import cl.duoc.albalab.data.remote.Sesion
 import cl.duoc.albalab.repository.RegistroRepository
 import cl.duoc.albalab.viewmodel.RegistrosViewModel
 import cl.duoc.albalab.viewmodel.filtrar
+import io.mockk.coEvery
+import io.mockk.mockk
+import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -26,14 +35,28 @@ class RegistrosViewModelTest {
     private val mariana = registro(3, "Mariana Rojas", TipoAyuda.VOLUNTARIADO)
     private val todos = listOf(ana, bruno, mariana)
 
+    private lateinit var dao: FakeRegistroDao
+    private lateinit var api: ApiAlbaLab
+
     @Before
     fun preparar() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        dao = FakeRegistroDao()
+        api = mockk()
+        Sesion.iniciar("token", "Gestor")
     }
 
     @After
     fun limpiar() {
         Dispatchers.resetMain()
+        Sesion.cerrar()
+    }
+
+    // WhileSubscribed solo emite con alguien escuchando.
+    private fun TestScope.crearVm(): RegistrosViewModel {
+        val vm = RegistrosViewModel(RegistroRepository(dao, api))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.estado.collect {} }
+        return vm
     }
 
     @Test
@@ -57,38 +80,56 @@ class RegistrosViewModelTest {
     }
 
     @Test
-    fun estadoReaccionaABusquedaYTipoYLimpiar() = runTest {
-        val dao = FakeRegistroDao().apply { lista.value = todos }
-        val vm = RegistrosViewModel(RegistroRepository(dao))
-        // WhileSubscribed solo emite con alguien escuchando.
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.estado.collect {} }
+    fun alCrearseTraeLaListaDelServidorYLaFiltra() = runTest {
+        coEvery { api.listarSolicitudes() } returns todos.map(::dto)
+        val vm = crearVm()
 
-        assertEquals(3, vm.estado.value.filtrados.size)
+        assertEquals(3, vm.estado.value.total)
         assertTrue(vm.estado.value.cargado)
+        assertFalse(vm.estado.value.actualizando)
 
         vm.onBusqueda("bru")
-        assertEquals(listOf(bruno), vm.estado.value.filtrados)
-        assertEquals(3, vm.estado.value.total)
+        assertEquals(listOf("Bruno Díaz"), vm.estado.value.filtrados.map { it.nombre })
 
         vm.onBusqueda("")
         vm.onTipo(TipoAyuda.DONACION)
-        assertEquals(listOf(ana), vm.estado.value.filtrados)
+        assertEquals(listOf(1), vm.estado.value.filtrados.map { it.id })
+        assertEquals(TipoAyuda.DONACION, vm.tipo.value)
 
         vm.limpiarFiltros()
         assertEquals(3, vm.estado.value.filtrados.size)
+        assertEquals("", vm.busqueda.value)
     }
 
-    private fun registro(id: Int, nombre: String, tipo: TipoAyuda) = RegistroInteres(
-        id = id,
-        nombre = nombre,
-        telefono = "912345678",
-        correo = "a@mail.cl",
-        direccion = "Calle 123",
-        personas = 1,
-        fechaContacto = "01/01/2030",
-        contactoPreferido = ContactoPreferido.CORREO,
-        tipoAyuda = tipo,
-        aceptaContacto = true,
-        recibeNovedades = false
-    )
+    @Test
+    fun sinConexionMuestraErrorYConservaLaCacheLocal() = runTest {
+        dao.lista.value = listOf(ana)
+        coEvery { api.listarSolicitudes() } throws IOException("sin red")
+        val vm = crearVm()
+
+        assertNotNull(vm.estado.value.error)
+        assertEquals(1, vm.estado.value.total)
+        assertFalse(vm.estado.value.sesionExpirada)
+    }
+
+    @Test
+    fun tokenVencidoMarcaSesionExpiradaYCierraLaSesion() = runTest {
+        coEvery { api.listarSolicitudes() } throws Fixtures.httpError(401)
+        val vm = crearVm()
+
+        assertTrue(vm.estado.value.sesionExpirada)
+        assertFalse(Sesion.activa)
+    }
+
+    @Test
+    fun reintentarDespuesDeUnErrorLimpiaElMensaje() = runTest {
+        coEvery { api.listarSolicitudes() } throws IOException("sin red")
+        val vm = crearVm()
+        coEvery { api.listarSolicitudes() } returns listOf(dto(ana))
+
+        vm.refrescar()
+
+        assertNull(vm.estado.value.error)
+        assertEquals(1, vm.estado.value.total)
+    }
 }
