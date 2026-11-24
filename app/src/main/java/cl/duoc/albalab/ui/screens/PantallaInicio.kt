@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cl.duoc.albalab.ui.componentes.ContenedorPantalla
+import cl.duoc.albalab.ui.componentes.aparecer
 import cl.duoc.albalab.ui.componentes.ImagenRemota
 import cl.duoc.albalab.viewmodel.ContenidoState
 
@@ -113,22 +114,27 @@ private fun BloqueIdentidad(estado: ContenidoState) {
         modifier = Modifier
             .fillMaxWidth()
             .height(160.dp)
+            .aparecer(0)
             .clip(RoundedCornerShape(16.dp))
     )
     Text(
         text = "CORPALIV • Alba Lab",
         style = MaterialTheme.typography.headlineMedium,
         color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.aparecer(1)
     )
     Text(
         text = estado.propositoInstitucional,
         style = MaterialTheme.typography.bodyLarge,
-        textAlign = TextAlign.Center
+        textAlign = TextAlign.Center,
+        modifier = Modifier.aparecer(2)
     )
     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .aparecer(3),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         estado.indicadores.forEach { ind ->
@@ -158,13 +164,13 @@ private fun BloqueAcciones(
     onQuieroColaborar: () -> Unit,
     onVerRegistros: () -> Unit
 ) {
-    FilledTonalButton(onClick = onVerProgramas, modifier = Modifier.fillMaxWidth()) {
+    FilledTonalButton(onClick = onVerProgramas, modifier = Modifier.fillMaxWidth().aparecer(4)) {
         Icon(Icons.Default.Info, contentDescription = "Programas")
         Spacer(Modifier.width(8.dp))
         Text("Conocer Programas")
     }
 
-    FilledTonalButton(onClick = onVerCatalogo, modifier = Modifier.fillMaxWidth()) {
+    FilledTonalButton(onClick = onVerCatalogo, modifier = Modifier.fillMaxWidth().aparecer(5)) {
         Icon(Icons.Default.ShoppingCart, contentDescription = "Catálogo")
         Spacer(Modifier.width(8.dp))
         Text("Ver Catálogo de Productos")
@@ -177,13 +183,14 @@ private fun BloqueAcciones(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
+            .aparecer(6)
     ) {
         Icon(Icons.Default.Favorite, contentDescription = "Colaborar")
         Spacer(Modifier.width(8.dp))
         Text("Quiero Colaborar")
     }
 
-    TextButton(onClick = onVerRegistros) {
+    TextButton(onClick = onVerRegistros, modifier = Modifier.aparecer(6)) {
         Text("Ver registros (Equipo Vinculación)")
     }
 }

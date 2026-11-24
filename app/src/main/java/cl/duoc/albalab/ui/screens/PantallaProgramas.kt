@@ -14,8 +14,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import cl.duoc.albalab.ui.componentes.aparecer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Card
@@ -65,11 +69,13 @@ fun PantallaProgramas(
                     )
                 }
 
-                items(estado.programas) { programa ->
+                itemsIndexed(estado.programas) { indice, programa ->
                     val isExpanded = expandidoId == programa.id
+                    val giro by animateFloatAsState(if (isExpanded) 180f else 0f, tween(200), label = "chevron")
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .aparecer(indice)
                             .animateContentSize()
                             .clickable { expandidoId = if (isExpanded) null else programa.id }
                     ) {
@@ -81,8 +87,9 @@ fun PantallaProgramas(
                                     modifier = Modifier.weight(1f)
                                 )
                                 Icon(
-                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                    contentDescription = "Expandir"
+                                    imageVector = Icons.Default.ExpandMore,
+                                    contentDescription = if (isExpanded) "Contraer" else "Expandir",
+                                    modifier = Modifier.graphicsLayer { rotationZ = giro }
                                 )
                             }
                             Spacer(Modifier.height(4.dp))
@@ -104,8 +111,8 @@ fun PantallaProgramas(
                     )
                 }
 
-                items(estado.casosExito) { caso ->
-                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                itemsIndexed(estado.casosExito) { indice, caso ->
+                    ElevatedCard(modifier = Modifier.fillMaxWidth().aparecer(indice)) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(caso.aliasParticipante, fontWeight = FontWeight.Bold)
                             Text(caso.historia, style = MaterialTheme.typography.bodyMedium)
