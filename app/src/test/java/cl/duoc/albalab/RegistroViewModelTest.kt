@@ -23,13 +23,15 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegistroViewModelTest {
     private lateinit var dao: FakeRegistroDao
+    private lateinit var notificador: FakeNotificador
     private lateinit var vm: RegistroViewModel
 
     @Before
     fun preparar() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         dao = FakeRegistroDao()
-        vm = RegistroViewModel(RegistroRepository(dao))
+        notificador = FakeNotificador()
+        vm = RegistroViewModel(RegistroRepository(dao), notificador)
     }
 
     @After
@@ -56,6 +58,8 @@ class RegistroViewModelTest {
 
         assertEquals(Campo.entries.toSet(), vm.formulario.value.errores.keys)
         assertEquals(0, dao.inserciones)
+        assertTrue(notificador.avisos.isEmpty())
+        assertEquals(1, vm.formulario.value.intentosFallidos)
     }
 
     @Test
@@ -66,6 +70,7 @@ class RegistroViewModelTest {
 
         val s = vm.formulario.value
         assertEquals(1, dao.inserciones)
+        assertEquals(listOf("Ana Pérez"), notificador.avisos)
         assertTrue(s.guardadoOk)
         assertFalse(s.guardando)
         assertEquals("", s.nombre)

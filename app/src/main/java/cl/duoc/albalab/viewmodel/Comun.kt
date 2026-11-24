@@ -17,3 +17,8 @@ internal fun soloErrores(vararg pares: Pair<Campo, String?>): Map<Campo, String>
 // Usado por las factories de los tres ViewModels.
 internal fun CreationExtras.repositorio() =
     RegistroRepository(AppDatabase.obtener(this[APPLICATION_KEY]!!).registroDao())
+
+// Lo implementa utils/Notificaciones. Es una interfaz para que el ViewModel no dependa de Android y se pueda testear.
+fun interface Notificador {
+    fun registroGuardado(nombre: String)
+}

@@ -2,6 +2,7 @@ package cl.duoc.albalab.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -9,6 +10,7 @@ import cl.duoc.albalab.data.model.ContactoPreferido
 import cl.duoc.albalab.data.model.RegistroInteres
 import cl.duoc.albalab.data.model.TipoAyuda
 import cl.duoc.albalab.repository.RegistroRepository
+import cl.duoc.albalab.utils.Notificaciones
 import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,10 +32,15 @@ data class FormularioState(
     val fotoPath: String? = null,
     val errores: Map<Campo, String> = emptyMap(),
     val guardando: Boolean = false,
-    val guardadoOk: Boolean = false
+    val guardadoOk: Boolean = false,
+    // Sube en cada envío rechazado; la pantalla lo usa para hacer scroll al primer campo con error.
+    val intentosFallidos: Int = 0
 )
 
-class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
+class RegistroViewModel(
+    private val repo: RegistroRepository,
+    private val notificador: Notificador
+) : ViewModel() {
     private val _formulario = MutableStateFlow(FormularioState())
     val formulario: StateFlow<FormularioState> = _formulario.asStateFlow()
 
@@ -92,7 +99,7 @@ class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
         )
 
         if (errores.isNotEmpty()) {
-            _formulario.update { it.copy(errores = errores, guardadoOk = false) }
+            _formulario.update { it.copy(errores = errores, guardadoOk = false, intentosFallidos = it.intentosFallidos + 1) }
             return
         }
 
@@ -113,13 +120,14 @@ class RegistroViewModel(private val repo: RegistroRepository) : ViewModel() {
                     fotoPath = s.fotoPath
                 )
             )
+            notificador.registroGuardado(s.nombre.trim())
             _formulario.value = FormularioState(guardadoOk = true)
         }
     }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer { RegistroViewModel(repositorio()) }
+            initializer { RegistroViewModel(repositorio(), Notificaciones(this[APPLICATION_KEY]!!)) }
         }
     }
 }
