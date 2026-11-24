@@ -5,16 +5,17 @@ import cl.duoc.albalab.data.model.RegistroInteres
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
+// Room en memoria para tests JVM: se comporta como la caché real (reemplaza por id).
 class FakeRegistroDao : RegistroDao {
     val lista = MutableStateFlow<List<RegistroInteres>>(emptyList())
-    var inserciones = 0
-        private set
 
     override suspend fun insertar(r: RegistroInteres): Long {
-        inserciones++
-        val nuevo = r.copy(id = inserciones)
-        lista.value = listOf(nuevo) + lista.value
-        return nuevo.id.toLong()
+        lista.value = listOf(r) + lista.value.filterNot { it.id == r.id }
+        return r.id.toLong()
+    }
+
+    override suspend fun insertarTodos(lista: List<RegistroInteres>) {
+        lista.forEach { insertar(it) }
     }
 
     override suspend fun actualizar(r: RegistroInteres) {
@@ -23,5 +24,15 @@ class FakeRegistroDao : RegistroDao {
 
     override fun obtenerTodos(): Flow<List<RegistroInteres>> = lista
 
+    override suspend fun listar(): List<RegistroInteres> = lista.value
+
     override suspend fun obtenerPorId(id: Int): RegistroInteres? = lista.value.firstOrNull { it.id == id }
+
+    override suspend fun eliminar(id: Int) {
+        lista.value = lista.value.filterNot { it.id == id }
+    }
+
+    override suspend fun borrarTodos() {
+        lista.value = emptyList()
+    }
 }

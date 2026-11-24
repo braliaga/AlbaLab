@@ -3,6 +3,7 @@ package cl.duoc.albalab.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+// Caché local de las solicitudes de ms-vinculacion: el id es el mismo del servidor.
 @Entity(tableName = "registros")
 data class RegistroInteres(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
@@ -16,5 +17,6 @@ data class RegistroInteres(
     val tipoAyuda: TipoAyuda,
     val aceptaContacto: Boolean,
     val recibeNovedades: Boolean,
-    val fotoPath: String? = null
+    val fotoPath: String? = null,
+    val estado: EstadoSolicitud = EstadoSolicitud.RECIBIDA
 )

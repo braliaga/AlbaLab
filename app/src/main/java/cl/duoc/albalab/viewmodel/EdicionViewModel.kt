@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.duoc.albalab.data.model.ContactoPreferido
+import cl.duoc.albalab.data.model.EstadoSolicitud
 import cl.duoc.albalab.repository.RegistroRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,11 +18,19 @@ import kotlinx.coroutines.launch
 
 data class EdicionState(
     val id: Int = 0,
+    val nombre: String = "",
     val telefono: String = "",
     val contacto: ContactoPreferido? = null,
     val recibeNovedades: Boolean = false,
+    // Estado guardado en el servidor y el que el gestor eligió en los chips (se envía solo si cambió).
+    val estadoActual: EstadoSolicitud = EstadoSolicitud.RECIBIDA,
+    val estadoElegido: EstadoSolicitud = EstadoSolicitud.RECIBIDA,
     val errores: Map<Campo, String> = emptyMap(),
-    val guardadoOk: Boolean = false
+    val procesando: Boolean = false,
+    val error: String? = null,
+    val sesionExpirada: Boolean = false,
+    val guardadoOk: Boolean = false,
+    val eliminado: Boolean = false
 )
 
 // El id llega por el argumento "id" de la ruta de navegación, a través de SavedStateHandle.
@@ -39,9 +48,12 @@ class EdicionViewModel(
             val r = repo.obtenerPorId(id) ?: return@launch
             _estado.update {
                 it.copy(
+                    nombre = r.nombre,
                     telefono = r.telefono,
                     contacto = r.contactoPreferido,
-                    recibeNovedades = r.recibeNovedades
+                    recibeNovedades = r.recibeNovedades,
+                    estadoActual = r.estado,
+                    estadoElegido = r.estado
                 )
             }
         }
@@ -57,6 +69,11 @@ class EdicionViewModel(
 
     fun onNovedades(v: Boolean) = _estado.update { it.copy(recibeNovedades = v) }
 
+    fun onEstado(e: EstadoSolicitud) = _estado.update {
+        if (it.estadoActual.esFinal) it else it.copy(estadoElegido = e)
+    }
+
+    // PUT con los datos editables y, si el gestor eligió otro estado, PATCH /estado (queda en el historial).
     fun guardar() {
         val e = _estado.value
         val errores = soloErrores(
@@ -69,17 +86,31 @@ class EdicionViewModel(
             return
         }
 
+        _estado.update { it.copy(errores = emptyMap(), procesando = true, error = null) }
         viewModelScope.launch {
-            val original = repo.obtenerPorId(e.id) ?: return@launch
-            repo.actualizar(
-                original.copy(
-                    telefono = e.telefono,
-                    contactoPreferido = e.contacto!!,
-                    recibeNovedades = e.recibeNovedades
-                )
-            )
-            _estado.update { it.copy(errores = emptyMap(), guardadoOk = true) }
+            val resultado = repo.actualizar(e.id, e.telefono, e.contacto!!, e.recibeNovedades).mapCatching {
+                if (e.estadoElegido != e.estadoActual) {
+                    repo.cambiarEstado(e.id, e.estadoElegido, "Cambio desde la app").getOrThrow()
+                }
+            }
+            resultado
+                .onSuccess { _estado.update { it.copy(procesando = false, guardadoOk = true) } }
+                .onFailure { err -> fallo(err) }
         }
+    }
+
+    // DELETE /solicitudes/{id}. La pantalla pide confirmación antes de llamar.
+    fun eliminar() {
+        _estado.update { it.copy(procesando = true, error = null) }
+        viewModelScope.launch {
+            repo.eliminar(id)
+                .onSuccess { _estado.update { it.copy(procesando = false, eliminado = true) } }
+                .onFailure { err -> fallo(err) }
+        }
+    }
+
+    private fun fallo(err: Throwable) = _estado.update {
+        it.copy(procesando = false, error = err.mensaje(), sesionExpirada = err.esSesionExpirada)
     }
 
     companion object {

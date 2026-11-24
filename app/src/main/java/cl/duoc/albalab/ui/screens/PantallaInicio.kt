@@ -18,7 +18,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material3.OutlinedCard
+import cl.duoc.albalab.utils.aPesosConDecimales
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -153,6 +157,49 @@ private fun BloqueIdentidad(estado: ContenidoState) {
                     textAlign = TextAlign.Center
                 )
             }
+        }
+    }
+    TarjetaDatosHoy(estado, modifier = Modifier.aparecer(4))
+}
+
+// APIs externas en el flujo de Inicio: UF y dólar (mindicador.cl) y próximo feriado (Nager.Date).
+// Si alguna falla se muestra un aviso breve y el resto de la pantalla sigue igual.
+@Composable
+private fun TarjetaDatosHoy(estado: ContenidoState, modifier: Modifier = Modifier) {
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Datos de hoy", style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.ShowChart, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = when {
+                        estado.economia != null ->
+                            "UF ${estado.economia.uf.aPesosConDecimales()} · Dólar ${estado.economia.dolar.aPesosConDecimales()}"
+                        estado.errorEconomia -> "No pudimos cargar la UF y el dólar (sin conexión)."
+                        else -> "Cargando UF y dólar…"
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Event, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = when {
+                        estado.proximoFeriado != null ->
+                            "Próximo feriado: ${estado.proximoFeriado.fechaCorta} · ${estado.proximoFeriado.nombre}"
+                        estado.errorFeriado -> "No pudimos cargar los feriados (sin conexión)."
+                        else -> "Cargando feriados…"
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Text(
+                "Fuentes: mindicador.cl · date.nager.at",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

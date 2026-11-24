@@ -1,6 +1,15 @@
 package cl.duoc.albalab.ui.screens
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import cl.duoc.albalab.data.model.EstadoSolicitud
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -61,12 +70,17 @@ private enum class Vista { CARGANDO, VACIO, SIN_RESULTADOS, LISTA }
 @Composable
 fun PantallaMisRegistros(
     onEditar: (Int) -> Unit,
+    onSesionExpirada: () -> Unit,
     modifier: Modifier = Modifier,
     vm: RegistrosViewModel = viewModel(factory = RegistrosViewModel.Factory)
 ) {
     val estado by vm.estado.collectAsState()
     val busqueda by vm.busqueda.collectAsState()
     val tipo by vm.tipo.collectAsState()
+
+    LaunchedEffect(estado.sesionExpirada) {
+        if (estado.sesionExpirada) onSesionExpirada()
+    }
 
     val vista = when {
         !estado.cargado -> Vista.CARGANDO
@@ -109,17 +123,58 @@ fun PantallaMisRegistros(
             }
         }
 
-        if (estado.cargado) {
-            AnimatedContent(
-                targetState = estado.filtrados.size to estado.total,
-                transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) },
-                label = "contador"
-            ) { (mostrados, total) ->
-                Text(
-                    text = "Mostrando $mostrados de $total",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            if (estado.cargado) {
+                AnimatedContent(
+                    targetState = estado.filtrados.size to estado.total,
+                    transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) },
+                    label = "contador",
+                    modifier = Modifier.weight(1f)
+                ) { (mostrados, total) ->
+                    Text(
+                        text = "Mostrando $mostrados de $total",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            IconButton(onClick = vm::refrescar, enabled = !estado.actualizando) {
+                Icon(Icons.Filled.Refresh, contentDescription = "Actualizar desde el servidor")
+            }
+        }
+
+        // Carga breve en línea mientras se pide la lista a ms-vinculacion; la caché sigue visible.
+        AnimatedVisibility(visible = estado.actualizando) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+
+        // Sin conexión o error del servidor: se muestra lo último guardado y se ofrece reintentar.
+        AnimatedVisibility(visible = estado.error != null && !estado.actualizando) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.CloudOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = (estado.error ?: "") + " Se muestra lo último guardado en el teléfono.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 12.dp)
+                    )
+                    TextButton(onClick = vm::refrescar) { Text("Reintentar") }
+                }
             }
         }
 
@@ -202,17 +257,37 @@ private fun TarjetaRegistro(registro: RegistroInteres, onClick: () -> Unit, modi
                     Spacer(Modifier.width(12.dp))
                 }
                 Column {
-                    Text(
-                        text = registro.tipoAyuda.etiqueta,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = registro.tipoAyuda.etiqueta,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        EtiquetaEstado(registro.estado)
+                    }
                     Text(text = registro.nombre, style = MaterialTheme.typography.titleMedium)
                     Text(text = "Tel: ${registro.telefono}", style = MaterialTheme.typography.bodyMedium)
                 }
             }
             Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.secondary)
         }
+    }
+}
+
+// Estado de la solicitud en ms-vinculacion (Recibida, En revisión, Contactado...).
+@Composable
+fun EtiquetaEstado(estado: EstadoSolicitud) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = if (estado.esFinal) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Text(
+            text = estado.etiqueta,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (estado.esFinal) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
     }
 }
 
